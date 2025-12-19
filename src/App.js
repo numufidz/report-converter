@@ -291,6 +291,18 @@ const RaporApp = () => {
     return avg.toFixed(2);
   };
 
+  // Function to get subjects that have at least one student with a value
+  const getSubjectsWithValues = () => {
+    // Filter subjects where at least one student has a non-empty, non-"-" value
+    return subjectOrder.filter(subjectName => {
+      return students.some(student => {
+        const subjectData = student?.subjects[subjectName];
+        // Check if avg is not '-' (meaning it has valid values)
+        return subjectData?.avg && subjectData.avg !== '-';
+      });
+    });
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -303,8 +315,11 @@ const RaporApp = () => {
   };
 
   const RaporPage1 = ({ student }) => {
-    // Display subjects in the order they appeared in the file
-    const displaySubjects = subjectOrder.map(subjectName => ({
+    // Get subjects that have values across all students
+    const subjectsWithValues = getSubjectsWithValues();
+    
+    // Display only subjects with values, in the order they appeared in the file
+    const displaySubjects = subjectsWithValues.map(subjectName => ({
       name: subjectName,
       data: student?.subjects[subjectName]
     })).filter(s => s.data);
