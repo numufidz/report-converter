@@ -377,7 +377,7 @@ const RaporApp = () => {
           </thead>
           <tbody>
             {displaySubjects.map((subject, idx) => {
-              const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam menunjukkan perilaku yang konsisten sesuai dengan nilai-nilai yang dipelajari.';
+              const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
               const tp2 = subject.data?.TP2 || '';
               
               return (
