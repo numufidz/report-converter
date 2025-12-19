@@ -325,7 +325,7 @@ const RaporApp = () => {
     })).filter(s => s.data);
 
     return (
-      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '11px'}}>
+      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '12px'}}>
         {/* Header */}
         <div className="text-center mb-3 pb-2 border-b-2 border-black">
           <h1 className="text-lg font-bold">LAPORAN HASIL BELAJAR (RAPOR)</h1>
@@ -381,7 +381,7 @@ const RaporApp = () => {
         </div>
 
         {/* Tabel Nilai */}
-        <table className="w-full border-collapse border border-black" style={{fontSize: '11px'}}>
+        <table className="w-full border-collapse border border-black">
           <thead>
             <tr className="bg-gray-300">
               <th className="border border-black px-2 py-1 w-8">No.</th>
@@ -398,18 +398,18 @@ const RaporApp = () => {
               return (
                 <React.Fragment key={idx}>
                   <tr>
-                    <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1}>{idx + 1}</td>
-                    <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1}>{subject.name}</td>
-                    <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1}>
+                    <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>{idx + 1}</td>
+                    <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>{subject.name}</td>
+                    <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>
                       {subject.data?.avg || '-'}
                     </td>
-                    <td className={`px-1 py-0 ${tp2 ? 'border-l border-r border-t border-black' : 'border border-black'}`} style={{fontSize: '10px !important', lineHeight: '1.1 !important'}}>
+                    <td className={`px-1 ${tp2 ? 'border-l border-r border-t border-black' : 'border border-black'}`} style={{fontSize: '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem'}}>
                       {tp1}
                     </td>
                   </tr>
                   {tp2 && (
                     <tr>
-                      <td className="border-l border-r border-b border-black px-1 py-0" style={{fontSize: '10px !important', lineHeight: '1.1 !important'}}>
+                      <td className="border-l border-r border-b border-black px-1" style={{fontSize: '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
                         {tp2}
                       </td>
                     </tr>
@@ -425,7 +425,7 @@ const RaporApp = () => {
 
   const RaporPage2 = ({ student }) => {
     return (
-      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '11px'}}>
+      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '12px'}}>
         <div className="mb-3">
           <table className="w-full border-collapse border border-black text-xs">
             <tbody>
