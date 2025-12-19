@@ -15,7 +15,7 @@ const RaporApp = () => {
     'Bahasa Indonesia',
     'Matematika',
     'Sejarah Indonesia',
-    'Bahasa dan Sastra Inggris',
+    'Bahasa Inggris',
     'Seni Budaya',
     'Pendidikan Jasmani Olahraga dan Kesehatan',
     'Informatika',
@@ -24,9 +24,16 @@ const RaporApp = () => {
     'Fisika',
     'Kimia',
     'Biologi',
+    'Sejarah/Sejarah Peminatan',
     'Geografi',
     'Sosiologi',
-    'Ekonomi'
+    'Ekonomi',
+    'Ekonomi Akuntansi',
+    'Antropologi',
+    'Bahasa dan Sastra Arab',
+    'Bahasa dan Sastra Indonesia',
+    'Bahasa dan Sastra Inggris',
+    'Keterampilan Bahasa Inggris'
   ];
 
   // Function to find subject columns dynamically from header
