@@ -7,6 +7,36 @@ const RaporApp = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewMode, setViewMode] = useState('single'); // 'single' or 'all'
 
+  // Helper function to convert Excel column letters to index
+  const excelColumnToIndex = (col) => {
+    let result = 0;
+    for (let i = 0; i < col.length; i++) {
+      result = result * 26 + (col.charCodeAt(i) - 64);
+    }
+    return result - 1; // Convert to 0-based index
+  };
+
+  // Subject mapping with exact column positions
+  const subjectMappings = [
+    { name: 'Pendidikan Agama Islam', ket: 'X', peng: 'Y' },
+    { name: 'Pendidikan Pancasila dan Kewarganegaraan', ket: 'AB', peng: 'AC' },
+    { name: 'Bahasa Indonesia', ket: 'H', peng: 'I' },
+    { name: 'Matematika', ket: 'V', peng: 'W' },
+    { name: 'Sejarah Indonesia', ket: 'AF', peng: 'AG' },
+    { name: 'Bahasa dan Sastra Inggris', ket: 'F', peng: 'G' },
+    { name: 'Seni Budaya', ket: 'AJ', peng: 'AK' },
+    { name: 'Pendidikan Jasmani Olahraga dan Kesehatan', ket: 'Z', peng: 'AA' },
+    { name: 'Informatika', ket: 'R', peng: 'S' },
+    { name: 'Prakarya dan Kewirausahaan', ket: 'AD', peng: 'AE' },
+    { name: 'Aswaja', ket: 'D', peng: 'E' },
+    { name: 'Fisika', ket: 'N', peng: 'O' },
+    { name: 'Kimia', ket: 'T', peng: 'U' },
+    { name: 'Biologi', ket: 'J', peng: 'K' },
+    { name: 'Geografi', ket: 'P', peng: 'Q' },
+    { name: 'Sosiologi', ket: 'AH', peng: 'AI' },
+    { name: 'Ekonomi', ket: 'L', peng: 'M' }
+  ];
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -36,22 +66,12 @@ const RaporApp = () => {
         }
       });
 
-      // Parse header mata pelajaran dari baris 7 (index 6)
-      const subjectRow = nilaiData[6];
-      const subjects = [];
-      
-      if (subjectRow) {
-        for (let i = 3; i < subjectRow.length; i++) {
-          const subject = subjectRow[i];
-          if (subject && subject !== 'RATA-RATA' && subject.trim() !== '') {
-            let subjectData = subjects.find(s => s.name === subject);
-            if (!subjectData) {
-              subjectData = { name: subject, KETimestamp: i, PENGTimestamp: i, TP1Timestamp: i, TP2Timestamp: i };
-              subjects.push(subjectData);
-            }
-          }
-        }
-      }
+      // Parse header mata pelajaran dengan mapping tetap
+      const subjects = subjectMappings.map(mapping => ({
+        name: mapping.name,
+        ketIndex: excelColumnToIndex(mapping.ket),
+        pengIndex: excelColumnToIndex(mapping.peng)
+      }));
 
       // Parse data siswa dari baris 9+ (index 8+)
       const nilaiRows = nilaiData.slice(8);
@@ -75,8 +95,8 @@ const RaporApp = () => {
         }
 
         subjects.forEach(subject => {
-          const ketVal = row[subject.KETimestamp];
-          const pengVal = row[subject.PENGTimestamp];
+          const ketVal = row[subject.ketIndex];
+          const pengVal = row[subject.pengIndex];
           
           studentMap[nama].subjects[subject.name] = {
             KET: ketVal,
@@ -98,8 +118,8 @@ const RaporApp = () => {
           const nama = row[2];
           if (studentMap[nama]) {
             subjects.forEach((subject) => {
-              const tp1 = row[subject.KETimestamp];
-              const tp2 = row[subject.PENGTimestamp];
+              const tp1 = row[subject.ketIndex];
+              const tp2 = row[subject.pengIndex];
               
               if (!studentMap[nama].subjects[subject.name]) {
                 studentMap[nama].subjects[subject.name] = {};
@@ -184,43 +204,14 @@ const RaporApp = () => {
   };
 
   const RaporPage1 = ({ student }) => {
-
-    // Filter hanya mata pelajaran yang ada di data - mapping yang lebih fleksibel
-    const subjectMapping = {
-      'Aswaja': 'Pendidikan Agama dan Budi Pekerti',
-      'Pendidikan Pancasila dan Kewarganegaraan': 'Pendidikan Pancasila',
-      'Bahasa Indonesia': 'Bahasa Indonesia',
-      'Matematika': 'Matematika',
-      'Biologi': 'Ilmu Pengetahuan Alam (Fisika, Kimia, Biologi)',
-      'Fisika': 'Ilmu Pengetahuan Alam (Fisika, Kimia, Biologi)',
-      'Kimia': 'Ilmu Pengetahuan Alam (Fisika, Kimia, Biologi)',
-      'Sosiologi': 'Ilmu Pengetahuan Sosial (Sosiologi, Ekonomi, Sejarah, Geografi)',
-      'Ekonomi': 'Ilmu Pengetahuan Sosial (Sosiologi, Ekonomi, Sejarah, Geografi)',
-      'Sejarah Indonesia': 'Ilmu Pengetahuan Sosial (Sosiologi, Ekonomi, Sejarah, Geografi)',
-      'Geografi': 'Ilmu Pengetahuan Sosial (Sosiologi, Ekonomi, Sejarah, Geografi)',
-      'Bahasa dan Sastra Inggris': 'Bahasa Inggris',
-      'Pendidikan Jasmani Olahraga dan Kesehatan': 'Pendidikan Jasmani Olahraga dan Kesehatan',
-      'Informatika': 'Informatika',
-      'Prakarya dan Kewirausahaan': 'Seni Budaya, dan Prakarya'
-    };
-
-    // Get unique mapped subjects
-    const uniqueSubjects = [];
-    const seenSubjects = new Set();
-    
-    Object.entries(subjectMapping).forEach(([originalName, displayName]) => {
-      if (student?.subjects[originalName] && !seenSubjects.has(displayName)) {
-        seenSubjects.add(displayName);
-        uniqueSubjects.push({
-          displayName,
-          originalName,
-          value: student.subjects[originalName]
-        });
-      }
-    });
+    // Display subjects in order
+    const displaySubjects = subjectMappings.map(mapping => ({
+      name: mapping.name,
+      data: student?.subjects[mapping.name]
+    })).filter(s => s.data);
 
     return (
-      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '15mm', fontSize: '11px'}}>
+      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '11px'}}>
         {/* Header */}
         <div className="text-center mb-3 pb-2 border-b-2 border-black">
           <h1 className="text-lg font-bold">LAPORAN HASIL BELAJAR (RAPOR)</h1>
@@ -276,28 +267,42 @@ const RaporApp = () => {
         </div>
 
         {/* Tabel Nilai */}
-        <table className="w-full border-collapse border border-black text-xs">
+        <table className="w-full border-collapse border border-black" style={{fontSize: '11px'}}>
           <thead>
             <tr className="bg-gray-300">
-              <th className="border border-black px-2 py-2 w-8">No.</th>
-              <th className="border border-black px-2 py-2 text-left">Mata Pelajaran</th>
-              <th className="border border-black px-2 py-2 w-16">Nilai Akhir</th>
-              <th className="border border-black px-2 py-2">Capaian Kompetensi</th>
+              <th className="border border-black px-2 py-1 w-8">No.</th>
+              <th className="border border-black px-2 py-1 text-left">Mata Pelajaran</th>
+              <th className="border border-black px-2 py-1 w-16">Nilai Akhir</th>
+              <th className="border border-black px-2 py-1">Capaian Kompetensi</th>
             </tr>
           </thead>
           <tbody>
-            {uniqueSubjects.map((subject, idx) => (
-              <tr key={idx}>
-                <td className="border border-black px-2 py-2 text-center align-top">{idx + 1}</td>
-                <td className="border border-black px-2 py-2 align-top">{subject.displayName}</td>
-                <td className="border border-black px-2 py-2 text-center font-bold align-top">
-                  {subject.value?.avg || '-'}
-                </td>
-                <td className="border border-black px-2 py-1 text-xs">
-                  {subject.value?.TP1 || 'Mencapai kompetensi dengan baik dalam menunjukkan perilaku yang konsisten sesuai dengan nilai-nilai yang dipelajari.'}
-                </td>
-              </tr>
-            ))}
+            {displaySubjects.map((subject, idx) => {
+              const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam menunjukkan perilaku yang konsisten sesuai dengan nilai-nilai yang dipelajari.';
+              const tp2 = subject.data?.TP2 || '';
+              
+              return (
+                <React.Fragment key={idx}>
+                  <tr>
+                    <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1}>{idx + 1}</td>
+                    <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1}>{subject.name}</td>
+                    <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1}>
+                      {subject.data?.avg || '-'}
+                    </td>
+                    <td className={`px-1 py-0 ${tp2 ? 'border-l border-r border-t border-black' : 'border border-black'}`} style={{fontSize: '10px !important', lineHeight: '1.1 !important'}}>
+                      {tp1}
+                    </td>
+                  </tr>
+                  {tp2 && (
+                    <tr>
+                      <td className="border-l border-r border-b border-black px-1 py-0" style={{fontSize: '10px !important', lineHeight: '1.1 !important'}}>
+                        {tp2}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -306,8 +311,7 @@ const RaporApp = () => {
 
   const RaporPage2 = ({ student }) => {
     return (
-      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '15mm', fontSize: '11px'}}>
-        {/* Lanjutan Tabel jika ada */}
+      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '11px'}}>
         <div className="mb-3">
           <table className="w-full border-collapse border border-black text-xs">
             <tbody>
