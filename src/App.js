@@ -5,7 +5,6 @@ import * as XLSX from 'xlsx';
 const RaporApp = () => {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState('single'); // 'single' or 'all'
 
   const handleFileUpload = async (event) => {
@@ -185,19 +184,6 @@ const RaporApp = () => {
   };
 
   const RaporPage1 = ({ student }) => {
-    // Semua mata pelajaran
-    const allSubjects = [
-      'Pendidikan Agama dan Budi Pekerti',
-      'Pendidikan Pancasila',
-      'Bahasa Indonesia',
-      'Matematika',
-      'Ilmu Pengetahuan Alam (Fisika, Kimia, Biologi)',
-      'Ilmu Pengetahuan Sosial (Sosiologi, Ekonomi, Sejarah, Geografi)',
-      'Bahasa Inggris',
-      'Pendidikan Jasmani Olahraga dan Kesehatan',
-      'Informatika',
-      'Seni Budaya, dan Prakarya'
-    ];
 
     // Filter hanya mata pelajaran yang ada di data - mapping yang lebih fleksibel
     const subjectMapping = {
