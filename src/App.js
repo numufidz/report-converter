@@ -6,36 +6,95 @@ const RaporApp = () => {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewMode, setViewMode] = useState('single'); // 'single' or 'all'
+  const [subjectOrder, setSubjectOrder] = useState([]); // Track subject order from file
 
-  // Helper function to convert Excel column letters to index
-  const excelColumnToIndex = (col) => {
-    let result = 0;
-    for (let i = 0; i < col.length; i++) {
-      result = result * 26 + (col.charCodeAt(i) - 64);
-    }
-    return result - 1; // Convert to 0-based index
+  // List of all subject names (for dynamic column matching)
+  const allSubjectNames = [
+    'Pendidikan Agama Islam',
+    'Pendidikan Pancasila dan Kewarganegaraan',
+    'Bahasa Indonesia',
+    'Matematika',
+    'Sejarah Indonesia',
+    'Bahasa dan Sastra Inggris',
+    'Seni Budaya',
+    'Pendidikan Jasmani Olahraga dan Kesehatan',
+    'Informatika',
+    'Prakarya dan Kewirausahaan',
+    'Aswaja',
+    'Fisika',
+    'Kimia',
+    'Biologi',
+    'Geografi',
+    'Sosiologi',
+    'Ekonomi'
+  ];
+
+  // Function to find subject columns dynamically from header
+  const findSubjectColumns = (headerRow) => {
+    const subjectColumns = {};
+    
+    // Trim and lowercase header for comparison
+    const trimmedHeader = headerRow.map(h => 
+      h ? String(h).trim().toLowerCase() : ''
+    );
+    
+    allSubjectNames.forEach(subjectName => {
+      const subjectLower = subjectName.toLowerCase();
+      let foundIndex = -1;
+      
+      // Find the column index that contains the subject name
+      for (let i = 0; i < trimmedHeader.length; i++) {
+        if (trimmedHeader[i] === subjectLower) {
+          foundIndex = i;
+          break;
+        }
+      }
+      
+      if (foundIndex !== -1) {
+        subjectColumns[subjectName] = {
+          ketIndex: foundIndex,
+          pengIndex: foundIndex + 1
+        };
+      }
+    });
+    
+    return subjectColumns;
   };
 
-  // Subject mapping with exact column positions
-  const subjectMappings = [
-    { name: 'Pendidikan Agama Islam', ket: 'X', peng: 'Y' },
-    { name: 'Pendidikan Pancasila dan Kewarganegaraan', ket: 'AB', peng: 'AC' },
-    { name: 'Bahasa Indonesia', ket: 'H', peng: 'I' },
-    { name: 'Matematika', ket: 'V', peng: 'W' },
-    { name: 'Sejarah Indonesia', ket: 'AF', peng: 'AG' },
-    { name: 'Bahasa dan Sastra Inggris', ket: 'F', peng: 'G' },
-    { name: 'Seni Budaya', ket: 'AJ', peng: 'AK' },
-    { name: 'Pendidikan Jasmani Olahraga dan Kesehatan', ket: 'Z', peng: 'AA' },
-    { name: 'Informatika', ket: 'R', peng: 'S' },
-    { name: 'Prakarya dan Kewirausahaan', ket: 'AD', peng: 'AE' },
-    { name: 'Aswaja', ket: 'D', peng: 'E' },
-    { name: 'Fisika', ket: 'N', peng: 'O' },
-    { name: 'Kimia', ket: 'T', peng: 'U' },
-    { name: 'Biologi', ket: 'J', peng: 'K' },
-    { name: 'Geografi', ket: 'P', peng: 'Q' },
-    { name: 'Sosiologi', ket: 'AH', peng: 'AI' },
-    { name: 'Ekonomi', ket: 'L', peng: 'M' }
-  ];
+  // Function to validate header and identify unrecognized subjects
+  const validateHeaderRow = (headerRow) => {
+    const trimmedHeader = headerRow.map(h => 
+      h ? String(h).trim().toLowerCase() : ''
+    );
+    
+    const recognizedSubjects = [];
+    const unrecognizedSubjects = new Set();
+    
+    // Check recognized subjects
+    allSubjectNames.forEach(subjectName => {
+      if (trimmedHeader.includes(subjectName.toLowerCase())) {
+        recognizedSubjects.push(subjectName);
+      }
+    });
+    
+    // Check for unrecognized subjects (exclude system columns)
+    const systemColumns = ['no', 'nis', 'nama', 'rata-rata', 'keterangan', 'sakit', 'izin', 'tanpa', 'kepala', 'wali', 'kelas', 'sekolah', 'fase', 'semester', 'tahun', 'tempat', 'tanggal', 'pramuka', 'pmr'];
+    
+    trimmedHeader.forEach((header) => {
+      if (header && 
+          !systemColumns.includes(header) && 
+          !recognizedSubjects.map(s => s.toLowerCase()).includes(header) &&
+          !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa)$/)) {
+        unrecognizedSubjects.add(header);
+      }
+    });
+    
+    return {
+      recognizedSubjects,
+      unrecognizedSubjects: Array.from(unrecognizedSubjects)
+    };
+  };
+
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -66,12 +125,23 @@ const RaporApp = () => {
         }
       });
 
-      // Parse header mata pelajaran dengan mapping tetap
-      const subjects = subjectMappings.map(mapping => ({
-        name: mapping.name,
-        ketIndex: excelColumnToIndex(mapping.ket),
-        pengIndex: excelColumnToIndex(mapping.peng)
-      }));
+      // Find subject columns dynamically from header row (row 7, index 6)
+      const headerRow = nilaiData[6] || [];
+      const subjectColumns = findSubjectColumns(headerRow);
+      const headerValidation = validateHeaderRow(headerRow);
+      
+      console.log('Dynamic subject columns found:', subjectColumns);
+      console.log('Header validation:', headerValidation);
+      
+      // Alert user if there are unrecognized subjects
+      if (headerValidation.unrecognizedSubjects.length > 0) {
+        console.warn('⚠️ Unrecognized subjects (akan diabaikan):', headerValidation.unrecognizedSubjects);
+      }
+      
+      if (headerValidation.recognizedSubjects.length === 0) {
+        alert('❌ Error: Tidak ada mata pelajaran yang dikenali di file!\n\nPastikan nama mata pelajaran di baris header sudah benar.');
+        return;
+      }
 
       // Parse data siswa dari baris 9+ (index 8+)
       const nilaiRows = nilaiData.slice(8);
@@ -94,11 +164,12 @@ const RaporApp = () => {
           };
         }
 
-        subjects.forEach(subject => {
-          const ketVal = row[subject.ketIndex];
-          const pengVal = row[subject.pengIndex];
+        // Process subjects using dynamically found columns
+        Object.entries(subjectColumns).forEach(([subjectName, indices]) => {
+          const ketVal = row[indices.ketIndex];
+          const pengVal = row[indices.pengIndex];
           
-          studentMap[nama].subjects[subject.name] = {
+          studentMap[nama].subjects[subjectName] = {
             KET: ketVal,
             PENG: pengVal,
             avg: calculateAverage(ketVal, pengVal)
@@ -111,22 +182,26 @@ const RaporApp = () => {
         const deskripsiSheet = workbook.Sheets[sheetNames[1]];
         const deskripsiData = XLSX.utils.sheet_to_json(deskripsiSheet, { header: 1 });
         
+        // Find subject columns in deskripsi sheet too
+        const deskripsiHeaderRow = deskripsiData[6] || [];
+        const deskripsiSubjectColumns = findSubjectColumns(deskripsiHeaderRow);
+        
         const deskripsiRows = deskripsiData.slice(8);
         deskripsiRows.forEach((row) => {
           if (!row[2] || row[2] === 'RATA-RATA KELAS' || row[2].trim() === '') return;
 
           const nama = row[2];
           if (studentMap[nama]) {
-            subjects.forEach((subject) => {
-              const tp1 = row[subject.ketIndex];
-              const tp2 = row[subject.pengIndex];
+            Object.entries(deskripsiSubjectColumns).forEach(([subjectName, indices]) => {
+              const tp1 = row[indices.ketIndex];
+              const tp2 = row[indices.pengIndex];
               
-              if (!studentMap[nama].subjects[subject.name]) {
-                studentMap[nama].subjects[subject.name] = {};
+              if (!studentMap[nama].subjects[subjectName]) {
+                studentMap[nama].subjects[subjectName] = {};
               }
               
-              studentMap[nama].subjects[subject.name].TP1 = tp1;
-              studentMap[nama].subjects[subject.name].TP2 = tp2;
+              studentMap[nama].subjects[subjectName].TP1 = tp1;
+              studentMap[nama].subjects[subjectName].TP2 = tp2;
             });
           }
         });
@@ -171,14 +246,31 @@ const RaporApp = () => {
 
       const processedStudents = Object.values(studentMap);
       
+      // Save subject order from the file
+      const orderedSubjects = Object.keys(subjectColumns);
+      setSubjectOrder(orderedSubjects);
+      
       setStudents(processedStudents);
       if (processedStudents.length > 0) {
         setSelectedStudent(processedStudents[0]);
       }
-      alert(`Berhasil memuat ${processedStudents.length} siswa dari ${sheetNames.length} sheet`);
+      
+      // Build detailed success message
+      let successMessage = `✅ Berhasil memuat ${processedStudents.length} siswa dari ${sheetNames.length} sheet\n`;
+      successMessage += `📚 Mata pelajaran terdeteksi: ${orderedSubjects.length}`;
+      
+      if (headerValidation.unrecognizedSubjects.length > 0) {
+        successMessage += `\n\n⚠️ ${headerValidation.unrecognizedSubjects.length} mata pelajaran tidak dikenali (diabaikan):\n`;
+        successMessage += headerValidation.unrecognizedSubjects.slice(0, 5).join(', ');
+        if (headerValidation.unrecognizedSubjects.length > 5) {
+          successMessage += `, +${headerValidation.unrecognizedSubjects.length - 5} lainnya`;
+        }
+      }
+      
+      alert(successMessage);
     } catch (error) {
       console.error('Error reading file:', error);
-      alert('Gagal membaca file. Error: ' + error.message);
+      alert('❌ Gagal membaca file.\n\nError: ' + error.message);
     }
   };
 
@@ -204,10 +296,10 @@ const RaporApp = () => {
   };
 
   const RaporPage1 = ({ student }) => {
-    // Display subjects in order
-    const displaySubjects = subjectMappings.map(mapping => ({
-      name: mapping.name,
-      data: student?.subjects[mapping.name]
+    // Display subjects in the order they appeared in the file
+    const displaySubjects = subjectOrder.map(subjectName => ({
+      name: subjectName,
+      data: student?.subjects[subjectName]
     })).filter(s => s.data);
 
     return (

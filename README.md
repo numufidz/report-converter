@@ -1,53 +1,212 @@
-# Getting Started with Create React App
+# 📊 Rapor App - Aplikasi Laporan Nilai Siswa
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 🎯 Deskripsi
 
-## Available Scripts
+Rapor App adalah aplikasi web berbasis React untuk mengelola dan menampilkan laporan nilai siswa (rapor) dengan fitur:
 
-In the project directory, you can run:
+- ✅ Upload file Excel dengan data siswa dan nilai
+- ✅ Dynamic column mapping (urutan kolom mata pelajaran fleksibel)
+- ✅ Tampilkan data siswa dalam format terorganisir
+- ✅ Cetak laporan nilai individual
+- ✅ Generate & cetak semua siswa sekaligus
+- ✅ Export data dalam format Excel
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🚀 Quick Start
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Prerequisites
+- Node.js (v14+)
+- npm atau yarn
 
-### `npm test`
+### Setup
+```bash
+# Install dependencies
+npm install
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Start development server
+npm start
 
-### `npm run build`
+# Build untuk production
+npm run build
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📚 Dokumentasi
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Semua dokumentasi tersedia di folder **[`docs/`](docs/)**.
 
-### `npm run eject`
+### **Mulai dari Sini:**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+#### 1️⃣ **Jawaban Cepat** (2-5 menit)
+- **[QUICK_ANSWER.md](docs/QUICK_ANSWER.md)** - Jawaban dalam 30 detik
+- **[COMPLETE_ANSWER_EDGE_CASES.md](docs/COMPLETE_ANSWER_EDGE_CASES.md)** - Jawaban lengkap dengan code
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+#### 2️⃣ **Fitur Utama**
+- **[DYNAMIC_COLUMN_MAPPING.md](docs/DYNAMIC_COLUMN_MAPPING.md)** - Penjelasan feature dynamic column mapping
+- **[SUMMARY_IMPLEMENTATION.md](docs/SUMMARY_IMPLEMENTATION.md)** - Ringkasan implementasi lengkap
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+#### 3️⃣ **Edge Cases & Error Handling**
+- **[EDGE_CASES_SUMMARY.md](docs/EDGE_CASES_SUMMARY.md)** - Ringkasan edge cases
+- **[EDGE_CASE_HANDLING_DETAILED.md](docs/EDGE_CASE_HANDLING_DETAILED.md)** - Detail teknis edge cases
+- **[EDGE_CASE_VISUAL_FLOWS.md](docs/EDGE_CASE_VISUAL_FLOWS.md)** - Diagram visual flows
+- **[EDGE_CASES_ANALYSIS.md](docs/EDGE_CASES_ANALYSIS.md)** - Analisis mendalam
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+#### 4️⃣ **Panduan & FAQ**
+- **[FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md)** - 15 pertanyaan umum & jawaban
+- **[TESTING_DYNAMIC_COLUMNS.md](docs/TESTING_DYNAMIC_COLUMNS.md)** - Testing guide
+- **[DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)** - Index semua dokumentasi
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 📂 Project Structure
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+rapor-app/
+├── src/
+│   ├── App.js              # Main component
+│   ├── App.css             # Styling
+│   ├── index.js            # Entry point
+│   └── ...
+├── public/
+│   ├── index.html
+│   └── ...
+├── docs/                   # Dokumentasi lengkap (12 file)
+│   ├── QUICK_ANSWER.md
+│   ├── COMPLETE_ANSWER_EDGE_CASES.md
+│   ├── DYNAMIC_COLUMN_MAPPING.md
+│   ├── EDGE_CASES_SUMMARY.md
+│   ├── EDGE_CASE_HANDLING_DETAILED.md
+│   ├── EDGE_CASE_VISUAL_FLOWS.md
+│   ├── EDGE_CASES_ANALYSIS.md
+│   ├── FAQ_EDGE_CASES.md
+│   ├── TESTING_DYNAMIC_COLUMNS.md
+│   ├── DOCUMENTATION_INDEX.md
+│   ├── SUMMARY_IMPLEMENTATION.md
+│   └── AGENT.md
+├── package.json
+├── tailwind.config.js
+├── postcss.config.js
+└── README.md               # File ini
+```
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🔧 Teknologi yang Digunakan
+
+| Aspek | Teknologi |
+|-------|-----------|
+| Frontend | React 19 |
+| Styling | Tailwind CSS 3 |
+| Build Tool | Create React App 5 |
+| Icons | Lucide React |
+| Data Format | Excel (XLSX) |
+| CSS Processing | PostCSS + Autoprefixer |
+
+---
+
+## 📖 Format File Excel yang Diharapkan
+
+File Excel harus memiliki struktur:
+
+**Baris 1-5:** Info sekolah  
+**Baris 7:** Header mata pelajaran (case-insensitive, urutan boleh berbeda)  
+**Baris 8:** Tipe komponen (KET/PENG)  
+**Baris 9+:** Data siswa  
+
+**Contoh Header:**
+```
+No;NIS;Nama;Aswaja;Matematika;Bahasa Indonesia;...
+```
+
+---
+
+## 🎓 Mata Pelajaran yang Didukung (17 item)
+
+1. Pendidikan Agama Islam
+2. Pendidikan Pancasila dan Kewarganegaraan
+3. Bahasa Indonesia
+4. Matematika
+5. Sejarah Indonesia
+6. Bahasa dan Sastra Inggris
+7. Seni Budaya
+8. Pendidikan Jasmani Olahraga dan Kesehatan
+9. Informatika
+10. Prakarya dan Kewirausahaan
+11. Aswaja
+12. Fisika
+13. Kimia
+14. Biologi
+15. Geografi
+16. Sosiologi
+17. Ekonomi
+
+---
+
+## ✨ Fitur Unggulan
+
+### Dynamic Column Mapping
+✅ File dengan urutan kolom berbeda bisa diproses otomatis  
+✅ Asalkan nama mata pelajaran sama  
+✅ Support kelas 10, 11, 12 dengan urutan berbeda-beda  
+
+### Robust Edge Case Handling
+✅ Nilai kosong → Display "-", tidak error  
+✅ Mapel tidak dikenal → Skip & warn user  
+✅ Sistem permissive tapi safe  
+✅ User selalu informed  
+
+---
+
+## 🐛 Troubleshooting
+
+### "Mapel tidak terdeteksi"
+→ Lihat: [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md)
+
+### "Nilai tampil dash (-)"
+→ Lihat: [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md#q1-apa-yang-terjadi-jika-kolom-nilai-kosong)
+
+### "Error saat upload file"
+→ Lihat: [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md#q12-data-siswa-tidak-muncul-setelah-upload-kenapa)
+
+### "Ingin test feature"
+→ Lihat: [TESTING_DYNAMIC_COLUMNS.md](docs/TESTING_DYNAMIC_COLUMNS.md)
+
+---
+
+## 🔍 Debugging
+
+1. Buka Browser DevTools (F12)
+2. Buka Tab **Console**
+3. Lihat log messages untuk debug info
+4. Cari file dokumentasi terkait di folder `docs/`
+
+---
+
+## 📝 Catatan Pengembangan
+
+- **Terakhir Update:** 19 Desember 2025
+- **Status:** Production-Ready ✅
+- **Version:** 0.1.0
+- **Dokumentasi:** Lengkap (12 file di folder `docs/`)
+
+---
+
+## 📞 Support
+
+Jika ada pertanyaan atau issue:
+
+1. Buka file dokumentasi di folder `docs/`
+2. Cari jawaban di [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md)
+3. Lihat [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) untuk navigasi lengkap
+
+---
+
+**Dokumentasi lengkap tersedia di folder [`docs/`](docs/)**  
+**Mulai dari: [QUICK_ANSWER.md](docs/QUICK_ANSWER.md) atau [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)**
+
+Happy coding! 🚀
 
 ### Analyzing the Bundle Size
 
