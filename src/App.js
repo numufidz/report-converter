@@ -205,10 +205,10 @@ const RaporApp = () => {
         row2: `Perlu peningkatan dalam ${tp1Text}`
       };
     } else {
-      // Equal: row1 = TP1, row2 = TP2
+      // Equal: TP1 is considered higher (better), TP2 is lower
       return {
         row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
-        row2: `Mencapai kompetensi dengan baik dalam ${tp2Text}`
+        row2: `Perlu peningkatan dalam ${tp2Text}`
       };
     }
   };
@@ -631,7 +631,7 @@ const RaporApp = () => {
           </div>
           <div>
             <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
-            <div className="border border-black px-2 py-2 text-xs" style={{minHeight: '75px'}}>
+            <div className="border border-black px-2 py-2 text-xs" style={{minHeight: '71px'}}>
               
             </div>
           </div>
@@ -644,19 +644,41 @@ const RaporApp = () => {
         </div>
 
         {/* Tanda Tangan */}
-        <div className="grid grid-cols-3 gap-3 text-xs text-center mt-4">
-          <div>
-            <p className="font-semibold mb-16">Orang Tua Murid</p>
-            <p className="border-t border-black pt-1">TTD</p>
+        <div className="text-xs mt-4">
+          {/* Row 1: Orang Tua (left) and Tempat/Tanggal + Wali Kelas (right) */}
+          <div className="grid grid-cols-3 gap-6">
+            <div className="text-left">
+              <p>Orang Tua/Wali</p>
+              <p className="mb-16"></p>
+              <p className="border-t border-black pt-1 w-24"></p>
+            </div>
+            <div></div>
+            <div className="text-left">
+              <p>{student?.identitas?.tempat}, {(() => {
+                const tanggal = student?.identitas?.tanggal;
+                if (!tanggal) return '-';
+                // If it's a number (Excel date), convert it
+                if (typeof tanggal === 'number') {
+                  const date = new Date((tanggal - 25569) * 86400 * 1000);
+                  return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+                return tanggal;
+              })()}</p>
+              <p className="mb-16"></p>
+              <p className="font-bold">{student?.identitas?.namaWaliKelas || 'Wali Kelas'}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold mb-2">{student?.identitas?.tempat}, {student?.identitas?.tanggal}</p>
-            <p className="font-semibold mb-12">{student?.identitas?.namaKepala || 'Kepala Sekolah'}</p>
-            <p className="border-t border-black pt-1">TTD</p>
-          </div>
-          <div>
-            <p className="font-semibold mb-16">{student?.identitas?.namaWaliKelas || 'Wali Kelas'}</p>
-            <p className="border-t border-black pt-1">TTD</p>
+
+          {/* Row 2: Mengetahui Kepala Sekolah (middle) */}
+          <div className="grid grid-cols-3 gap-6 mt-6">
+            <div></div>
+            <div className="text-left">
+              <p>Mengetahui,</p>
+              <p>Kepala Sekolah</p>
+              <p className="mb-16"></p>
+              <p className="font-bold">{student?.identitas?.namaKepala || 'Kepala Sekolah'}</p>
+            </div>
+            <div></div>
           </div>
         </div>
       </div>
