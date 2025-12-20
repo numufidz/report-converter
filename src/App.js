@@ -358,8 +358,8 @@ const RaporApp = () => {
         </div>
 
         {/* Identitas Siswa */}
-        <div className={`grid gap-3 mb-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 gap-4'}`}>
-          <div className={isMobile ? 'text-xs' : 'text-xs'}>
+        <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+          <div>
             <div className="flex mb-1 flex-wrap">
               <span className="font-semibold min-w-fit">Nama Murid</span>
               <span className="mx-1">:</span>
@@ -381,7 +381,7 @@ const RaporApp = () => {
               <span className="flex-1 break-words">{student?.identitas?.alamat || '-'}</span>
             </div>
           </div>
-          <div className={isMobile ? 'text-xs' : 'text-xs'}>
+          <div>
             <div className="flex mb-1 flex-wrap">
               <span className="font-semibold min-w-fit">Kelas</span>
               <span className="mx-1">:</span>
@@ -406,66 +406,44 @@ const RaporApp = () => {
         </div>
 
         {/* Tabel Nilai */}
-        {isMobile ? (
-          <div className="space-y-3 mb-3">
+        <table className="w-full border-collapse border border-black mb-3">
+          <thead>
+            <tr className="bg-gray-300">
+              <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+              <th className={`border border-black px-2 py-1 text-left ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+              <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+              <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+            </tr>
+          </thead>
+          <tbody>
             {displaySubjects.map((subject, idx) => {
               const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
               const tp2 = subject.data?.TP2 || '';
               
               return (
-                <div key={idx} className="border border-black rounded-lg p-2 space-y-2">
-                  <div className="font-semibold text-xs flex justify-between items-start gap-2">
-                    <span>{idx + 1}. {subject.name}</span>
-                    <span className="bg-gray-300 px-2 py-1 rounded min-w-fit">{subject.data?.avg || '-'}</span>
-                  </div>
-                  <div className="text-xs border-t border-gray-300 pt-2 space-y-1">
-                    <p className="leading-relaxed">{tp1}</p>
-                    {tp2 && <p className="leading-relaxed italic text-gray-700">{tp2}</p>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <table className="w-full border-collapse border border-black mb-3">
-            <thead>
-              <tr className="bg-gray-300">
-                <th className="border border-black px-2 py-1 w-8">No.</th>
-                <th className="border border-black px-2 py-1 text-left">Mata Pelajaran</th>
-                <th className="border border-black px-2 py-1 w-16">Nilai Akhir</th>
-                <th className="border border-black px-2 py-1">Capaian Kompetensi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displaySubjects.map((subject, idx) => {
-                const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
-                const tp2 = subject.data?.TP2 || '';
-                
-                return (
-                  <React.Fragment key={idx}>
+                <React.Fragment key={idx}>
+                <tr>
+                  <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
+                  <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
+                  <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
+                    {subject.data?.avg || '-'}
+                  </td>
+                  <td className={`px-1 ${tp2 ? 'border-l border-r border-t border-black' : 'border border-black'}`} style={{fontSize: isMobile ? '9px' : '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem'}}>
+                    {tp1}
+                  </td>
+                </tr>
+                {tp2 && (
                   <tr>
-                    <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>{idx + 1}</td>
-                    <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>{subject.name}</td>
-                    <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>
-                      {subject.data?.avg || '-'}
-                    </td>
-                    <td className={`px-1 ${tp2 ? 'border-l border-r border-t border-black' : 'border border-black'}`} style={{fontSize: '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem'}}>
-                      {tp1}
+                    <td className="border-l border-r border-b border-black px-1" style={{fontSize: isMobile ? '9px' : '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
+                      {tp2}
                     </td>
                   </tr>
-                  {tp2 && (
-                    <tr>
-                      <td className="border-l border-r border-b border-black px-1" style={{fontSize: '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
-                        {tp2}
-                      </td>
-                    </tr>
-                  )}
+                )}
                 </React.Fragment>
               );
             })}
-            </tbody>
-          </table>
-        )}
+          </tbody>
+        </table>
       </div>
     );
   };
@@ -637,92 +615,188 @@ const RaporApp = () => {
 
         {/* Content - Collapsible on mobile */}
         {(!isMobile || mobileMenuOpen) && (
-          <div className={isMobile ? 'p-3 border-t border-gray-200 space-y-3' : 'max-w-7xl mx-auto px-4 py-4 space-y-4'}>
-            {/* Upload Section */}
-            <div className="border-b border-gray-200 pb-3">
-              <h2 className={`font-semibold mb-2 flex items-center gap-2 ${isMobile ? 'text-sm' : 'text-base'}`}>
-                <FileSpreadsheet size={isMobile ? 16 : 20} /> Upload File Excel
-              </h2>
-              <label className={`inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition ${isMobile ? 'text-sm' : 'text-base'}`}>
-                <Upload size={isMobile ? 16 : 20} />
-                {isMobile ? 'Pilih File' : 'Pilih File Excel'}
-                <input 
-                  type="file" 
-                  accept=".xlsx,.xls" 
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-              {students.length > 0 && (
-                <p className={`mt-2 text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                  ✓ {students.length} siswa berhasil dimuat
-                </p>
-              )}
-            </div>
-
-            {students.length > 0 && (
+          <div className={isMobile ? 'p-3 border-t border-gray-200 space-y-3' : 'max-w-7xl mx-auto px-4 py-4'}>
+            {isMobile ? (
+              // Mobile: Two-column layout (Upload & Student Selection left, View/Print controls right)
               <>
-                {/* Student Selection */}
-                <div>
-                  <label className={`block font-semibold mb-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>Pilih Siswa:</label>
-                  <select 
-                    className={`w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isMobile ? 'text-sm' : 'text-base'}`}
-                    onChange={(e) => {
-                      setSelectedStudent(students[e.target.value]);
-                      setViewMode('single');
-                      if (isMobile) setMobileMenuOpen(false);
-                    }}
-                  >
-                    {students.map((student, index) => (
-                      <option key={index} value={index}>
-                        {student.Nama} {isMobile ? `(${student.NIS})` : `(NIS: ${student.NIS})`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Left: Upload Section & Student Selection */}
+                  <div className="border-r border-gray-200 pr-3 space-y-3">
+                    {/* Upload Section */}
+                    <div>
+                      <h2 className="font-semibold mb-2 flex items-center gap-2 text-xs">
+                        <FileSpreadsheet size={14} /> Upload File Excel
+                      </h2>
+                      <label className="inline-flex items-center gap-2 px-2 py-1 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs w-full justify-center">
+                        <Upload size={14} />
+                        Pilih File
+                        <input 
+                          type="file" 
+                          accept=".xlsx,.xls" 
+                          onChange={handleFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      {students.length > 0 && (
+                        <p className="mt-2 text-gray-600 text-xs">
+                          ✓ {students.length} siswa berhasil dimuat
+                        </p>
+                      )}
+                    </div>
 
-                {/* View Mode Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setViewMode('single');
-                      if (isMobile) setMobileMenuOpen(false);
-                    }}
-                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                  >
-                    {isMobile ? '1 Siswa' : 'Lihat 1 Siswa'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setViewMode('all');
-                      if (isMobile) setMobileMenuOpen(false);
-                    }}
-                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                  >
-                    {isMobile ? 'Semua' : 'Lihat Semua'}
-                  </button>
-                </div>
+                    {/* Student Selection */}
+                    {students.length > 0 && (
+                      <div>
+                        <label className="block font-semibold mb-1 text-xs">Pilih Siswa:</label>
+                        <select 
+                          className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                          onChange={(e) => {
+                            setSelectedStudent(students[e.target.value]);
+                            setViewMode('single');
+                            if (isMobile) setMobileMenuOpen(false);
+                          }}
+                        >
+                          {students.map((student, index) => (
+                            <option key={index} value={index}>
+                              {student.Nama} ({student.NIS})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Print Buttons */}
-                <div className={isMobile ? 'flex gap-2' : 'flex gap-2'}>
-                  <button
-                    onClick={handlePrint}
-                    className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium`}
-                  >
-                    <Printer size={isMobile ? 16 : 18} />
-                    {isMobile ? (viewMode === 'single' ? 'Print' : 'Print Semua') : (viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa')}
-                  </button>
-                  {viewMode === 'single' && (
-                    <button
-                      onClick={handleGenerateAll}
-                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
-                    >
-                      <Printer size={isMobile ? 16 : 18} />
-                      {isMobile ? 'Semua' : 'Generate Semua'}
-                    </button>
+                  {/* Right: View Mode & Print Buttons */}
+                  {students.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      {/* View Mode Buttons */}
+                      <button
+                        onClick={() => {
+                          setViewMode('single');
+                          if (isMobile) setMobileMenuOpen(false);
+                        }}
+                        className={`w-full px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        1 Siswa
+                      </button>
+                      <button
+                        onClick={() => {
+                          setViewMode('all');
+                          if (isMobile) setMobileMenuOpen(false);
+                        }}
+                        className={`w-full px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Semua
+                      </button>
+
+                      {/* Print Buttons */}
+                      <button
+                        onClick={handlePrint}
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium"
+                      >
+                        <Printer size={12} />
+                        Print
+                      </button>
+                      {viewMode === 'single' && (
+                        <button
+                          onClick={handleGenerateAll}
+                          className="w-full flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium"
+                        >
+                          <Printer size={12} />
+                          Semua
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </>
+            ) : (
+              // Desktop: Two-column layout (Upload left, Student controls right)
+              <div className="grid grid-cols-3 gap-6">
+                {/* Left Column: Upload Section */}
+                <div className="col-span-1 border-r border-gray-200 pr-6">
+                  <h2 className="font-semibold mb-3 flex items-center gap-2 text-base">
+                    <FileSpreadsheet size={20} /> Upload File Excel
+                  </h2>
+                  <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-base w-full justify-center">
+                    <Upload size={20} />
+                    Pilih File Excel
+                    <input 
+                      type="file" 
+                      accept=".xlsx,.xls" 
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  {students.length > 0 && (
+                    <p className="mt-3 text-gray-600 text-sm">
+                      ✓ {students.length} siswa berhasil dimuat
+                    </p>
+                  )}
+                </div>
+
+                {/* Right Columns: Student Selection Controls */}
+                {students.length > 0 && (
+                  <div className="col-span-2">
+                    {/* Student Selection */}
+                    <div className="mb-4">
+                      <label className="block font-semibold mb-2 text-sm">Pilih Siswa:</label>
+                      <select 
+                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                        onChange={(e) => {
+                          setSelectedStudent(students[e.target.value]);
+                          setViewMode('single');
+                        }}
+                      >
+                        {students.map((student, index) => (
+                          <option key={index} value={index}>
+                            {student.Nama} (NIS: {student.NIS})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* View Mode & Print Buttons Row */}
+                    <div className="flex gap-3">
+                      {/* View Mode Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewMode('single')}
+                          className={`px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        >
+                          Lihat 1 Siswa
+                        </button>
+                        <button
+                          onClick={() => setViewMode('all')}
+                          className={`px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        >
+                          Lihat Semua
+                        </button>
+                      </div>
+
+                      {/* Print Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handlePrint}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
+                        >
+                          <Printer size={18} />
+                          {viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa'}
+                        </button>
+                        {viewMode === 'single' && (
+                          <button
+                            onClick={handleGenerateAll}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
+                          >
+                            <Printer size={18} />
+                            Generate Semua
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -732,7 +806,7 @@ const RaporApp = () => {
       <div className={`${isMobile ? 'p-2' : 'p-4'}`}>
         {/* Rapor Display */}
         {students.length > 0 && (
-          <div className={isMobile ? 'space-y-2' : 'max-w-7xl mx-auto'}>
+          <div className={isMobile ? 'space-y-2' : 'w-full'}>
             {viewMode === 'single' ? (
               // Single student view - show both pages
               <>
