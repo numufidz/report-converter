@@ -9,6 +9,7 @@ const RaporApp = () => {
   const [subjectOrder, setSubjectOrder] = useState([]); // Track subject order from file
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [curriculum, setCurriculum] = useState({}); // New: Store curriculum data
 
   // Handle window resize for responsive behavior
   useEffect(() => {
@@ -106,7 +107,7 @@ const RaporApp = () => {
       if (header && 
           !systemColumns.includes(header) && 
           !recognizedSubjects.map(s => s.toLowerCase()).includes(header) &&
-          !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa)$/)) {
+          !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa|kelompok)$/)) {
         unrecognizedSubjects.add(header);
       }
     });
@@ -115,6 +116,101 @@ const RaporApp = () => {
       recognizedSubjects,
       unrecognizedSubjects: Array.from(unrecognizedSubjects)
     };
+  };
+
+  // New function: Parse curriculum from Sheet 2
+  const parseKurikulum = (kurikulumData) => {
+    const curriculumObj = {};
+    
+    // Start from row 2 (index 1) - skip header
+    for (let i = 1; i < kurikulumData.length; i++) {
+      const row = kurikulumData[i];
+      if (!row || !row[1]) break; // Stop if no mapel name
+      
+      const mapelName = String(row[1] || '').trim();
+      if (!mapelName || mapelName === '') continue;
+      
+      // Structure: Col 0=No, 1=Mapel, 2=Kelompok, 3=Kelas10, 4=TP1_10, 5=TP2_10, 6=Kelas11, 7=TP1_11, 8=TP2_11, 9=Kelas12, 10=TP1_12, 11=TP2_12
+      curriculumObj[mapelName] = {
+        class_10: {
+          tp1: String(row[4] || '').trim(),
+          tp2: String(row[5] || '').trim()
+        },
+        class_11: {
+          tp1: String(row[7] || '').trim(),
+          tp2: String(row[8] || '').trim()
+        },
+        class_12: {
+          tp1: String(row[10] || '').trim(),
+          tp2: String(row[11] || '').trim()
+        }
+      };
+    }
+    
+    return curriculumObj;
+  };
+
+  // New function: Generate descriptions based on KET vs PENG comparison
+  const generateDescriptions = (ket, peng, mapelName, studentClass, curriculumData) => {
+    const defaultTemplate = 'Kompetensi dasar tercapai dengan baik';
+    
+    // Parse values
+    const ketVal = parseFloat(String(ket || '').replace(',', '.'));
+    const pengVal = parseFloat(String(peng || '').replace(',', '.'));
+    
+    // Get curriculum data for the subject and class - use parameter instead of state
+    const currMapel = curriculumData[mapelName];
+    let classKey = 'class_10'; // Default
+    
+    if (studentClass && String(studentClass).includes('11')) {
+      classKey = 'class_11';
+    } else if (studentClass && String(studentClass).includes('12')) {
+      classKey = 'class_12';
+    }
+    
+    const tp = currMapel?.[classKey];
+    let tp1Text = tp?.tp1 || '';
+    let tp2Text = tp?.tp2 || '';
+    
+    // Debug log
+    console.log(`generateDescriptions: mapel=${mapelName}, class=${classKey}, tp1=${tp1Text}, tp2=${tp2Text}, ket=${ketVal}, peng=${pengVal}`);
+    
+    // If no curriculum data, use defaults
+    if (!tp1Text && !tp2Text) {
+      return {
+        row1: defaultTemplate,
+        row2: ''
+      };
+    }
+    
+    // If either value is invalid, use default
+    if (isNaN(ketVal) || isNaN(pengVal)) {
+      return {
+        row1: defaultTemplate,
+        row2: ''
+      };
+    }
+    
+    // Compare values
+    if (ketVal > pengVal) {
+      // KET > PENG: tp1 with "Mencapai kompetensi..." prefix
+      return {
+        row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
+        row2: `Perlu peningkatan dalam ${tp2Text}`
+      };
+    } else if (pengVal > ketVal) {
+      // PENG > KET: tp2 with "Mencapai kompetensi..." prefix (nilai lebih tinggi)
+      return {
+        row1: `Mencapai kompetensi dengan baik dalam ${tp2Text}`,
+        row2: `Perlu peningkatan dalam ${tp1Text}`
+      };
+    } else {
+      // Equal: row1 = TP1, row2 = TP2
+      return {
+        row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
+        row2: `Mencapai kompetensi dengan baik dalam ${tp2Text}`
+      };
+    }
   };
 
 
@@ -199,33 +295,32 @@ const RaporApp = () => {
         });
       });
 
-      // Parse Sheet 2 - DESKRIPSI (Capaian Kompetensi)
+      // Parse Sheet 2 - KURIKULUM (NEW: Changed from DESKRIPSI)
+      let parsedCurriculum = {};
       if (sheetNames.length > 1) {
-        const deskripsiSheet = workbook.Sheets[sheetNames[1]];
-        const deskripsiData = XLSX.utils.sheet_to_json(deskripsiSheet, { header: 1 });
+        const kurikulumSheet = workbook.Sheets[sheetNames[1]];
+        const kurikulumData = XLSX.utils.sheet_to_json(kurikulumSheet, { header: 1 });
         
-        // Find subject columns in deskripsi sheet too
-        const deskripsiHeaderRow = deskripsiData[6] || [];
-        const deskripsiSubjectColumns = findSubjectColumns(deskripsiHeaderRow);
+        // Parse kurikulum structure
+        parsedCurriculum = parseKurikulum(kurikulumData);
+        setCurriculum(parsedCurriculum);
+        console.log('Curriculum parsed:', parsedCurriculum);
         
-        const deskripsiRows = deskripsiData.slice(8);
-        deskripsiRows.forEach((row) => {
-          if (!row[2] || row[2] === 'RATA-RATA KELAS' || row[2].trim() === '') return;
-
-          const nama = row[2];
-          if (studentMap[nama]) {
-            Object.entries(deskripsiSubjectColumns).forEach(([subjectName, indices]) => {
-              const tp1 = row[indices.ketIndex];
-              const tp2 = row[indices.pengIndex];
-              
-              if (!studentMap[nama].subjects[subjectName]) {
-                studentMap[nama].subjects[subjectName] = {};
-              }
-              
-              studentMap[nama].subjects[subjectName].TP1 = tp1;
-              studentMap[nama].subjects[subjectName].TP2 = tp2;
-            });
-          }
+        // Auto-generate descriptions for each student and subject
+        Object.keys(studentMap).forEach((namaStudent) => {
+          const student = studentMap[namaStudent];
+          Object.keys(student.subjects).forEach((mapelName) => {
+            const subjectData = student.subjects[mapelName];
+            const descriptions = generateDescriptions(
+              subjectData.KET,
+              subjectData.PENG,
+              mapelName,
+              schoolInfo.kelas,
+              parsedCurriculum  // Pass curriculum data as parameter
+            );
+            subjectData.TP1 = descriptions.row1;
+            subjectData.TP2 = descriptions.row2;
+          });
         });
       }
 
@@ -280,6 +375,10 @@ const RaporApp = () => {
       // Build detailed success message
       let successMessage = `✅ Berhasil memuat ${processedStudents.length} siswa dari ${sheetNames.length} sheet\n`;
       successMessage += `📚 Mata pelajaran terdeteksi: ${orderedSubjects.length}`;
+      
+      if (Object.keys(parsedCurriculum).length > 0) {
+        successMessage += `\n📖 Kurikulum dimuat: ${Object.keys(parsedCurriculum).length} mapel`;
+      }
       
       if (headerValidation.unrecognizedSubjects.length > 0) {
         successMessage += `\n\n⚠️ ${headerValidation.unrecognizedSubjects.length} mata pelajaran tidak dikenali (diabaikan):\n`;
@@ -343,14 +442,12 @@ const RaporApp = () => {
       padding: '12px',
       fontSize: '11px'
     } : {
-      width: '210mm',
-      minHeight: '297mm',
-      padding: '10mm',
+      padding: '0',
       fontSize: '12px'
     };
 
     return (
-      <div className="bg-white page-break" style={pageStyle}>
+      <div className="bg-white rapor-page-1" style={pageStyle}>
         {/* Header */}
         <div className="text-center mb-3 pb-2 border-b-2 border-black">
           <h1 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>LAPORAN HASIL BELAJAR (RAPOR)</h1>
@@ -360,53 +457,53 @@ const RaporApp = () => {
         {/* Identitas Siswa */}
         <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
           <div>
-            <div className="flex mb-1 flex-wrap">
-              <span className="font-semibold min-w-fit">Nama Murid</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.nama || student?.Nama || '-'}</span>
+            <div className="flex mb-1">
+              <span className="font-semibold w-20">Nama Murid</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.nama || student?.Nama || '-'}</span>
             </div>
-            <div className="flex mb-1 flex-wrap">
-              <span className="font-semibold min-w-fit">NISN</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.nisn || student?.NIS || '-'}</span>
+            <div className="flex mb-1">
+              <span className="font-semibold w-20">NISN</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.nisn || student?.NIS || '-'}</span>
             </div>
-            <div className="flex mb-1 flex-wrap">
-              <span className="font-semibold min-w-fit">Sekolah</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.sekolah || 'SMA Mamba\'unnur'}</span>
+            <div className="flex mb-1">
+              <span className="font-semibold w-20">Sekolah</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.sekolah || 'SMA Mamba\'unnur'}</span>
             </div>
-            <div className="flex flex-wrap">
-              <span className="font-semibold min-w-fit">Alamat</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1 break-words">{student?.identitas?.alamat || '-'}</span>
+            <div className="flex">
+              <span className="font-semibold w-20">Alamat</span>
+              <span>:</span>
+              <span className="flex-1 ml-2 break-words">{student?.identitas?.alamat || '-'}</span>
             </div>
           </div>
           <div>
-            <div className="flex mb-1 flex-wrap">
-              <span className="font-semibold min-w-fit">Kelas</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.kelas || 'X'}</span>
+            <div className="flex mb-1">
+              <span className="font-semibold w-20">Kelas</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.kelas || 'X'}</span>
             </div>
-            <div className="flex mb-1 flex-wrap">
-              <span className="font-semibold min-w-fit">Fase</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.fase || '-'}</span>
+            <div className="flex mb-1">
+              <span className="font-semibold w-20">Fase</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.fase || '-'}</span>
             </div>
-            <div className="flex mb-1 flex-wrap">
-              <span className="font-semibold min-w-fit">Semester</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.semester || '1'}</span>
+            <div className="flex mb-1">
+              <span className="font-semibold w-20">Semester</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.semester || '1'}</span>
             </div>
-            <div className="flex flex-wrap">
-              <span className="font-semibold min-w-fit">Tahun Ajaran</span>
-              <span className="mx-1">:</span>
-              <span className="flex-1">{student?.identitas?.tahunAjaran || '2025/2026'}</span>
+            <div className="flex">
+              <span className="font-semibold w-20">Tahun Ajaran</span>
+              <span>:</span>
+              <span className="flex-1 ml-2">{student?.identitas?.tahunAjaran || '2025/2026'}</span>
             </div>
           </div>
         </div>
 
         {/* Tabel Nilai */}
-        <table className="w-full border-collapse border border-black mb-3">
+        <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
           <thead>
             <tr className="bg-gray-300">
               <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
@@ -428,13 +525,13 @@ const RaporApp = () => {
                   <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
                     {subject.data?.avg || '-'}
                   </td>
-                  <td className={`px-1 ${tp2 ? 'border-l border-r border-t border-black' : 'border border-black'}`} style={{fontSize: isMobile ? '9px' : '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem'}}>
+                  <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
                     {tp1}
                   </td>
                 </tr>
                 {tp2 && (
                   <tr>
-                    <td className="border-l border-r border-b border-black px-1" style={{fontSize: isMobile ? '9px' : '10px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
+                    <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
                       {tp2}
                     </td>
                   </tr>
@@ -453,30 +550,15 @@ const RaporApp = () => {
       padding: '12px',
       fontSize: '11px'
     } : {
-      width: '210mm',
-      minHeight: '297mm',
-      padding: '10mm',
+      padding: '0',
       fontSize: '12px'
     };
 
     return (
-      <div className="bg-white page-break" style={pageStyle}>
-        <div className="mb-3">
-          <table className="w-full border-collapse border border-black text-xs">
-            <tbody>
-              <tr className="bg-gray-300">
-                <td className="border border-black px-2 py-2 w-8 text-center font-bold">No.</td>
-                <td className="border border-black px-2 py-2 text-left font-bold">Mata Pelajaran</td>
-                <td className="border border-black px-2 py-2 w-16 text-center font-bold">Nilai Akhir</td>
-                <td className="border border-black px-2 py-2 font-bold">Capaian Kompetensi</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
+      <div className="bg-white rapor-page-2" style={pageStyle}>
         {/* Kokurikuler */}
-        <div className="mb-3">
-          <div className="bg-gray-300 border border-black px-2 py-2 font-bold text-xs">Kokurikuler</div>
+        <div className="mb-3 mt-6">
+          <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold text-xs">Kokurikuler</div>
           <div className="border border-black px-2 py-2 min-h-12 text-xs">
             {student?.kokurikuler || 'Ananda sudah baik dalam kreativitas yang terlihat dari kemampuan menemukan dan mengembangkan alternatif solusi yang efektif pada tema konservasi energi. Ananda masih perlu berlatih dalam mengomunikasikan gagasan.'}
           </div>
@@ -484,7 +566,7 @@ const RaporApp = () => {
 
         {/* Ekstrakurikuler */}
         <div className="mb-3">
-          <table className="w-full border-collapse border border-black text-xs">
+          <table className="w-full border-collapse text-xs" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
             <thead>
               <tr className="bg-gray-300">
                 <th className="border border-black px-2 py-2 w-8">No.</th>
@@ -529,8 +611,8 @@ const RaporApp = () => {
         {/* Ketidakhadiran dan Catatan */}
         <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
           <div>
-            <div className="bg-gray-300 border border-black px-2 py-2 font-bold">Ketidakhadiran</div>
-            <table className="w-full border-collapse border border-black">
+            <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Ketidakhadiran</div>
+            <table className="w-full border-collapse" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
               <tbody>
                 <tr>
                   <td className="border border-black px-2 py-1">Sakit</td>
@@ -548,8 +630,8 @@ const RaporApp = () => {
             </table>
           </div>
           <div>
-            <div className="bg-gray-300 border border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
-            <div className="border border-black px-2 py-2 min-h-20 text-xs">
+            <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
+            <div className="border border-black px-2 py-2 text-xs" style={{minHeight: '75px'}}>
               
             </div>
           </div>
@@ -557,7 +639,7 @@ const RaporApp = () => {
 
         {/* Tanggapan Orang Tua */}
         <div className="mb-3 text-xs">
-          <div className="bg-gray-300 border border-black px-2 py-2 font-bold">Tanggapan Orang Tua/Wali Murid</div>
+          <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Tanggapan Orang Tua/Wali Murid</div>
           <div className="border border-black px-2 py-2 min-h-12"></div>
         </div>
 
@@ -585,9 +667,44 @@ const RaporApp = () => {
     <div className="min-h-screen bg-gray-50 print:bg-white">
       <style>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 20mm;
+          }
           body { margin: 0; }
           .print\\:hidden { display: none !important; }
           .page-break { page-break-after: always; }
+          /* Table header repeat on every page */
+          table thead { display: table-header-group; }
+          /* Allow table rows to break across pages */
+          table tbody tr { page-break-inside: avoid; }
+          /* Table styling - single thin border */
+          table { border-collapse: collapse; border-spacing: 0; border: none; }
+          table td, table th { 
+            border: 0.5pt solid #000;
+            margin: 0;
+            padding: inherit;
+          }
+          /* Remove border between TP rows in same subject - only for Nilai table */
+          .nilai-table tbody tr:nth-child(odd) td:last-child {
+            border-bottom: none !important;
+          }
+          .nilai-table tbody tr:nth-child(even) td:last-child {
+            border-top: none !important;
+          }
+          /* Container untuk RaporPage1 bisa melanjut ke page 2 */
+          .rapor-page-1 { 
+            page-break-after: auto; 
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0;
+          }
+          .rapor-page-2 { 
+            page-break-before: auto; 
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0;
+          }
         }
       `}</style>
 
@@ -596,7 +713,7 @@ const RaporApp = () => {
         {/* Mobile Header */}
         {isMobile && (
           <div className="flex items-center justify-between p-3 bg-blue-600 text-white">
-            <h1 className="text-sm font-bold">RAPOR APP</h1>
+            <h1 className="text-sm font-bold">APLIKASI RAPOR KURMER - EDISI REVISI 2025</h1>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-1 hover:bg-blue-700 rounded"
@@ -609,7 +726,7 @@ const RaporApp = () => {
         {/* Desktop Header */}
         {!isMobile && (
           <div className="max-w-7xl mx-auto px-4 py-3">
-            <h1 className="text-lg font-bold text-gray-800">RAPOR APP</h1>
+            <h1 className="text-lg font-bold text-gray-800">APLIKASI RAPOR KURMER - EDISI REVISI 2025</h1>
           </div>
         )}
 
@@ -627,8 +744,8 @@ const RaporApp = () => {
                       <h2 className="font-semibold mb-2 flex items-center gap-2 text-xs">
                         <FileSpreadsheet size={14} /> Upload File Excel
                       </h2>
-                      <label className="inline-flex items-center gap-2 px-2 py-1 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs w-full justify-center">
-                        <Upload size={14} />
+                      <label className="inline-flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-base w-full justify-center">
+                        <Upload size={20} />
                         Pilih File
                         <input 
                           type="file" 
@@ -675,7 +792,7 @@ const RaporApp = () => {
                           setViewMode('single');
                           if (isMobile) setMobileMenuOpen(false);
                         }}
-                        className={`w-full px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        className={`inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition w-full ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                       >
                         1 Siswa
                       </button>
@@ -684,7 +801,7 @@ const RaporApp = () => {
                           setViewMode('all');
                           if (isMobile) setMobileMenuOpen(false);
                         }}
-                        className={`w-full px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        className={`inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition w-full ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                       >
                         Semua
                       </button>
@@ -692,17 +809,17 @@ const RaporApp = () => {
                       {/* Print Buttons */}
                       <button
                         onClick={handlePrint}
-                        className="w-full flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium"
+                        className="inline-flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium w-full"
                       >
-                        <Printer size={12} />
+                        <Printer size={14} />
                         Print
                       </button>
                       {viewMode === 'single' && (
                         <button
                           onClick={handleGenerateAll}
-                          className="w-full flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium"
+                          className="inline-flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium w-full"
                         >
-                          <Printer size={12} />
+                          <Printer size={14} />
                           Semua
                         </button>
                       )}
