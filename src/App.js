@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Upload, Printer, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Upload, Printer, FileSpreadsheet, Menu, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 const RaporApp = () => {
@@ -7,6 +7,17 @@ const RaporApp = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewMode, setViewMode] = useState('single'); // 'single' or 'all'
   const [subjectOrder, setSubjectOrder] = useState([]); // Track subject order from file
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Handle window resize for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // List of all subject names (for dynamic column matching)
   const allSubjectNames = [
@@ -16,10 +27,12 @@ const RaporApp = () => {
     'Matematika',
     'Sejarah Indonesia',
     'Bahasa Inggris',
-    'Seni Budaya',
     'Pendidikan Jasmani Olahraga dan Kesehatan',
+    'Seni Budaya',
+    'Teknologi Informasi dan Komunikasi',
     'Informatika',
     'Prakarya dan Kewirausahaan',
+    'Bahasa Daerah/Jawa',
     'Aswaja',
     'Fisika',
     'Kimia',
@@ -33,6 +46,8 @@ const RaporApp = () => {
     'Bahasa dan Sastra Arab',
     'Bahasa dan Sastra Indonesia',
     'Bahasa dan Sastra Inggris',
+    'Bahasa Indonesia Tingkat Lanjut',
+    'Bahasa Inggris Tingkat Lanjut',
     'Keterampilan Bahasa Inggris'
   ];
 
@@ -324,79 +339,110 @@ const RaporApp = () => {
       data: student?.subjects[subjectName]
     })).filter(s => s.data);
 
+    const pageStyle = isMobile ? {
+      padding: '12px',
+      fontSize: '11px'
+    } : {
+      width: '210mm',
+      minHeight: '297mm',
+      padding: '10mm',
+      fontSize: '12px'
+    };
+
     return (
-      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '12px'}}>
+      <div className="bg-white page-break" style={pageStyle}>
         {/* Header */}
         <div className="text-center mb-3 pb-2 border-b-2 border-black">
-          <h1 className="text-lg font-bold">LAPORAN HASIL BELAJAR (RAPOR)</h1>
-          <p className="text-xs">SMA MAMBA'UNNUR - KURIKULUM MERDEKA</p>
+          <h1 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>LAPORAN HASIL BELAJAR (RAPOR)</h1>
+          <p className={isMobile ? 'text-xs' : 'text-xs'}>SMA MAMBA'UNNUR - KURIKULUM MERDEKA</p>
         </div>
 
         {/* Identitas Siswa */}
-        <div className="grid grid-cols-2 gap-4 mb-3 text-xs">
-          <div>
-            <div className="flex mb-1">
-              <span className="w-20 font-semibold">Nama Murid</span>
-              <span className="w-2">:</span>
+        <div className={`grid gap-3 mb-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 gap-4'}`}>
+          <div className={isMobile ? 'text-xs' : 'text-xs'}>
+            <div className="flex mb-1 flex-wrap">
+              <span className="font-semibold min-w-fit">Nama Murid</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.nama || student?.Nama || '-'}</span>
             </div>
-            <div className="flex mb-1">
-              <span className="w-20 font-semibold">NISN</span>
-              <span className="w-2">:</span>
+            <div className="flex mb-1 flex-wrap">
+              <span className="font-semibold min-w-fit">NISN</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.nisn || student?.NIS || '-'}</span>
             </div>
-            <div className="flex mb-1">
-              <span className="w-20 font-semibold">Sekolah</span>
-              <span className="w-2">:</span>
+            <div className="flex mb-1 flex-wrap">
+              <span className="font-semibold min-w-fit">Sekolah</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.sekolah || 'SMA Mamba\'unnur'}</span>
             </div>
-            <div className="flex">
-              <span className="w-20 font-semibold">Alamat</span>
-              <span className="w-2">:</span>
-              <span className="flex-1">{student?.identitas?.alamat || '-'}</span>
+            <div className="flex flex-wrap">
+              <span className="font-semibold min-w-fit">Alamat</span>
+              <span className="mx-1">:</span>
+              <span className="flex-1 break-words">{student?.identitas?.alamat || '-'}</span>
             </div>
           </div>
-          <div>
-            <div className="flex mb-1">
-              <span className="w-16 font-semibold">Kelas</span>
-              <span className="w-2">:</span>
+          <div className={isMobile ? 'text-xs' : 'text-xs'}>
+            <div className="flex mb-1 flex-wrap">
+              <span className="font-semibold min-w-fit">Kelas</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.kelas || 'X'}</span>
             </div>
-            <div className="flex mb-1">
-              <span className="w-16 font-semibold">Fase</span>
-              <span className="w-2">:</span>
+            <div className="flex mb-1 flex-wrap">
+              <span className="font-semibold min-w-fit">Fase</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.fase || '-'}</span>
             </div>
-            <div className="flex mb-1">
-              <span className="w-16 font-semibold">Semester</span>
-              <span className="w-2">:</span>
+            <div className="flex mb-1 flex-wrap">
+              <span className="font-semibold min-w-fit">Semester</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.semester || '1'}</span>
             </div>
-            <div className="flex">
-              <span className="w-16 font-semibold">Tahun Ajaran</span>
-              <span className="w-2">:</span>
+            <div className="flex flex-wrap">
+              <span className="font-semibold min-w-fit">Tahun Ajaran</span>
+              <span className="mx-1">:</span>
               <span className="flex-1">{student?.identitas?.tahunAjaran || '2025/2026'}</span>
             </div>
           </div>
         </div>
 
         {/* Tabel Nilai */}
-        <table className="w-full border-collapse border border-black">
-          <thead>
-            <tr className="bg-gray-300">
-              <th className="border border-black px-2 py-1 w-8">No.</th>
-              <th className="border border-black px-2 py-1 text-left">Mata Pelajaran</th>
-              <th className="border border-black px-2 py-1 w-16">Nilai Akhir</th>
-              <th className="border border-black px-2 py-1">Capaian Kompetensi</th>
-            </tr>
-          </thead>
-          <tbody>
+        {isMobile ? (
+          <div className="space-y-3 mb-3">
             {displaySubjects.map((subject, idx) => {
               const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
               const tp2 = subject.data?.TP2 || '';
               
               return (
-                <React.Fragment key={idx}>
+                <div key={idx} className="border border-black rounded-lg p-2 space-y-2">
+                  <div className="font-semibold text-xs flex justify-between items-start gap-2">
+                    <span>{idx + 1}. {subject.name}</span>
+                    <span className="bg-gray-300 px-2 py-1 rounded min-w-fit">{subject.data?.avg || '-'}</span>
+                  </div>
+                  <div className="text-xs border-t border-gray-300 pt-2 space-y-1">
+                    <p className="leading-relaxed">{tp1}</p>
+                    {tp2 && <p className="leading-relaxed italic text-gray-700">{tp2}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <table className="w-full border-collapse border border-black mb-3">
+            <thead>
+              <tr className="bg-gray-300">
+                <th className="border border-black px-2 py-1 w-8">No.</th>
+                <th className="border border-black px-2 py-1 text-left">Mata Pelajaran</th>
+                <th className="border border-black px-2 py-1 w-16">Nilai Akhir</th>
+                <th className="border border-black px-2 py-1">Capaian Kompetensi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displaySubjects.map((subject, idx) => {
+                const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
+                const tp2 = subject.data?.TP2 || '';
+                
+                return (
+                  <React.Fragment key={idx}>
                   <tr>
                     <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>{idx + 1}</td>
                     <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: '12px'}}>{subject.name}</td>
@@ -417,15 +463,26 @@ const RaporApp = () => {
                 </React.Fragment>
               );
             })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        )}
       </div>
     );
   };
 
   const RaporPage2 = ({ student }) => {
+    const pageStyle = isMobile ? {
+      padding: '12px',
+      fontSize: '11px'
+    } : {
+      width: '210mm',
+      minHeight: '297mm',
+      padding: '10mm',
+      fontSize: '12px'
+    };
+
     return (
-      <div className="bg-white page-break" style={{width: '210mm', minHeight: '297mm', padding: '10mm', fontSize: '12px'}}>
+      <div className="bg-white page-break" style={pageStyle}>
         <div className="mb-3">
           <table className="w-full border-collapse border border-black text-xs">
             <tbody>
@@ -547,7 +604,7 @@ const RaporApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-50 print:bg-white">
       <style>{`
         @media print {
           body { margin: 0; }
@@ -557,17 +614,38 @@ const RaporApp = () => {
       `}</style>
 
       {/* Control Panel - Hidden saat print */}
-      <div className="max-w-6xl mx-auto mb-4 print:hidden">
-        <div className="bg-white rounded-lg shadow p-4">
-          {/* Upload Section */}
-          <div className="mb-4 pb-4 border-b">
-            <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-              <FileSpreadsheet /> Upload File Excel
-            </h2>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700">
-                <Upload size={20} />
-                Pilih File Excel
+      <div className="bg-white border-b border-gray-200 print:hidden sticky top-0 z-50">
+        {/* Mobile Header */}
+        {isMobile && (
+          <div className="flex items-center justify-between p-3 bg-blue-600 text-white">
+            <h1 className="text-sm font-bold">RAPOR APP</h1>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-1 hover:bg-blue-700 rounded"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        )}
+
+        {/* Desktop Header */}
+        {!isMobile && (
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <h1 className="text-lg font-bold text-gray-800">RAPOR APP</h1>
+          </div>
+        )}
+
+        {/* Content - Collapsible on mobile */}
+        {(!isMobile || mobileMenuOpen) && (
+          <div className={isMobile ? 'p-3 border-t border-gray-200 space-y-3' : 'max-w-7xl mx-auto px-4 py-4 space-y-4'}>
+            {/* Upload Section */}
+            <div className="border-b border-gray-200 pb-3">
+              <h2 className={`font-semibold mb-2 flex items-center gap-2 ${isMobile ? 'text-sm' : 'text-base'}`}>
+                <FileSpreadsheet size={isMobile ? 16 : 20} /> Upload File Excel
+              </h2>
+              <label className={`inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition ${isMobile ? 'text-sm' : 'text-base'}`}>
+                <Upload size={isMobile ? 16 : 20} />
+                {isMobile ? 'Pilih File' : 'Pilih File Excel'}
                 <input 
                   type="file" 
                   accept=".xlsx,.xls" 
@@ -576,105 +654,113 @@ const RaporApp = () => {
                 />
               </label>
               {students.length > 0 && (
-                <span className="text-sm text-gray-600">
-                  {students.length} siswa berhasil dimuat
-                </span>
+                <p className={`mt-2 text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                  ✓ {students.length} siswa berhasil dimuat
+                </p>
               )}
             </div>
-          </div>
 
-          {students.length > 0 && (
-            <>
-              {/* View Controls */}
-              <div className="flex gap-4 items-center mb-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-2">Pilih Siswa:</label>
+            {students.length > 0 && (
+              <>
+                {/* Student Selection */}
+                <div>
+                  <label className={`block font-semibold mb-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>Pilih Siswa:</label>
                   <select 
-                    className="w-full border rounded px-3 py-2"
+                    className={`w-full border border-gray-300 rounded px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isMobile ? 'text-sm' : 'text-base'}`}
                     onChange={(e) => {
                       setSelectedStudent(students[e.target.value]);
                       setViewMode('single');
+                      if (isMobile) setMobileMenuOpen(false);
                     }}
                   >
                     {students.map((student, index) => (
                       <option key={index} value={index}>
-                        {student.Nama} (NIS: {student.NIS})
+                        {student.Nama} {isMobile ? `(${student.NIS})` : `(NIS: ${student.NIS})`}
                       </option>
                     ))}
                   </select>
                 </div>
+
+                {/* View Mode Buttons */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setViewMode('single')}
-                    className={`px-4 py-2 rounded ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    onClick={() => {
+                      setViewMode('single');
+                      if (isMobile) setMobileMenuOpen(false);
+                    }}
+                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                   >
-                    Lihat 1 Siswa
+                    {isMobile ? '1 Siswa' : 'Lihat 1 Siswa'}
                   </button>
                   <button
-                    onClick={() => setViewMode('all')}
-                    className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                    onClick={() => {
+                      setViewMode('all');
+                      if (isMobile) setMobileMenuOpen(false);
+                    }}
+                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                   >
-                    Lihat Semua
+                    {isMobile ? 'Semua' : 'Lihat Semua'}
                   </button>
                 </div>
-              </div>
 
-
-
-              {/* Print Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={handlePrint}
-                  className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700"
-                >
-                  <Printer size={20} />
-                  {viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa'}
-                </button>
-                {viewMode === 'single' && (
+                {/* Print Buttons */}
+                <div className={isMobile ? 'flex gap-2' : 'flex gap-2'}>
                   <button
-                    onClick={handleGenerateAll}
-                    className="bg-purple-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-purple-700"
+                    onClick={handlePrint}
+                    className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium`}
                   >
-                    <Printer size={20} />
-                    Generate & Print Semua
+                    <Printer size={isMobile ? 16 : 18} />
+                    {isMobile ? (viewMode === 'single' ? 'Print' : 'Print Semua') : (viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa')}
                   </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+                  {viewMode === 'single' && (
+                    <button
+                      onClick={handleGenerateAll}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
+                    >
+                      <Printer size={isMobile ? 16 : 18} />
+                      {isMobile ? 'Semua' : 'Generate Semua'}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Rapor Display */}
-      {students.length > 0 && (
-        <div className="max-w-6xl mx-auto">
-          {viewMode === 'single' ? (
-            // Single student view - show both pages
-            <>
-              <RaporPage1 student={selectedStudent} />
-              <RaporPage2 student={selectedStudent} />
-            </>
-          ) : (
-            // All students view
-            <>
-              {students.map((student, index) => (
-                <React.Fragment key={index}>
-                  <RaporPage1 student={student} />
-                  <RaporPage2 student={student} />
-                </React.Fragment>
-              ))}
-            </>
-          )}
-        </div>
-      )}
+      {/* Content Area */}
+      <div className={`${isMobile ? 'p-2' : 'p-4'}`}>
+        {/* Rapor Display */}
+        {students.length > 0 && (
+          <div className={isMobile ? 'space-y-2' : 'max-w-7xl mx-auto'}>
+            {viewMode === 'single' ? (
+              // Single student view - show both pages
+              <>
+                <RaporPage1 student={selectedStudent} />
+                <RaporPage2 student={selectedStudent} />
+              </>
+            ) : (
+              // All students view
+              <>
+                {students.map((student, index) => (
+                  <React.Fragment key={index}>
+                    <RaporPage1 student={student} />
+                    <RaporPage2 student={student} />
+                  </React.Fragment>
+                ))}
+              </>
+            )}
+          </div>
+        )}
 
-      {students.length === 0 && (
-        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow p-8 text-center">
-          <FileSpreadsheet size={64} className="mx-auto mb-4 text-gray-400" />
-          <h3 className="text-xl font-bold mb-2">Belum Ada Data</h3>
-          <p className="text-gray-600">Silakan upload file Excel untuk mulai membuat rapor</p>
-        </div>
-      )}
+        {students.length === 0 && (
+          <div className={`bg-white rounded-lg shadow p-6 text-center ${isMobile ? 'mt-4' : 'max-w-7xl mx-auto mt-8'}`}>
+            <FileSpreadsheet size={isMobile ? 48 : 64} className="mx-auto mb-4 text-gray-400" />
+            <h3 className={`font-bold mb-2 ${isMobile ? 'text-base' : 'text-xl'}`}>Belum Ada Data</h3>
+            <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Silakan upload file Excel untuk mulai membuat rapor</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

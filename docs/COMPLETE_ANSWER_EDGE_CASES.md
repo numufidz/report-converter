@@ -91,7 +91,7 @@ Input: calculateAverage(85, 81.5)
 
 #### **Penjelasan Detail:**
 
-**Mata Pelajaran yang Dikenal (17 item):**
+**Mata Pelajaran yang Dikenal (28 item):**
 ```javascript
 const allSubjectNames = [
   'Pendidikan Agama Islam',
@@ -99,18 +99,29 @@ const allSubjectNames = [
   'Bahasa Indonesia',
   'Matematika',
   'Sejarah Indonesia',
-  'Bahasa dan Sastra Inggris',
-  'Seni Budaya',
+  'Bahasa Inggris',
   'Pendidikan Jasmani Olahraga dan Kesehatan',
+  'Seni Budaya',
+  'Teknologi Informasi dan Komunikasi',
   'Informatika',
   'Prakarya dan Kewirausahaan',
+  'Bahasa Daerah/Jawa',
   'Aswaja',
   'Fisika',
   'Kimia',
   'Biologi',
+  'Sejarah/Sejarah Peminatan',
   'Geografi',
   'Sosiologi',
-  'Ekonomi'
+  'Ekonomi',
+  'Ekonomi Akuntansi',
+  'Antropologi',
+  'Bahasa dan Sastra Arab',
+  'Bahasa dan Sastra Indonesia',
+  'Bahasa dan Sastra Inggris',
+  'Bahasa Indonesia Tingkat Lanjut',
+  'Bahasa Inggris Tingkat Lanjut',
+  'Keterampilan Bahasa Inggris'
 ];
 ```
 

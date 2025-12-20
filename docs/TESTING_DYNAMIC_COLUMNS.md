@@ -9,18 +9,29 @@ Berikut adalah nama-nama mata pelajaran yang dapat dikenali oleh sistem (case-in
 3. Bahasa Indonesia
 4. Matematika
 5. Sejarah Indonesia
-6. Bahasa dan Sastra Inggris
-7. Seni Budaya
-8. Pendidikan Jasmani Olahraga dan Kesehatan
-9. Informatika
-10. Prakarya dan Kewirausahaan
-11. Aswaja
-12. Fisika
-13. Kimia
-14. Biologi
-15. Geografi
-16. Sosiologi
-17. Ekonomi
+6. Bahasa Inggris
+7. Pendidikan Jasmani Olahraga dan Kesehatan
+8. Seni Budaya
+9. Teknologi Informasi dan Komunikasi
+10. Informatika
+11. Prakarya dan Kewirausahaan
+12. Bahasa Daerah/Jawa
+13. Aswaja
+14. Fisika
+15. Kimia
+16. Biologi
+17. Sejarah/Sejarah Peminatan
+18. Geografi
+19. Sosiologi
+20. Ekonomi
+21. Ekonomi Akuntansi
+22. Antropologi
+23. Bahasa dan Sastra Arab
+24. Bahasa dan Sastra Indonesia
+25. Bahasa dan Sastra Inggris
+26. Bahasa Indonesia Tingkat Lanjut
+27. Bahasa Inggris Tingkat Lanjut
+28. Keterampilan Bahasa Inggris
 
 ---
 
