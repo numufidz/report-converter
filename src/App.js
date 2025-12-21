@@ -10,6 +10,44 @@ const RaporApp = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [curriculum, setCurriculum] = useState({}); // New: Store curriculum data
+  const [showPrintPreview, setShowPrintPreview] = useState(false); // Toggle print preview
+  const [layoutType, setLayoutType] = useState('kelas10'); // 'kelas10' or 'kelas1112'
+
+  // Daftar mata pelajaran wajib
+  const requiredSubjects = [
+    'Pendidikan Agama Islam',
+    'Pendidikan Pancasila dan Kewarganegaraan',
+    'Bahasa Indonesia',
+    'Matematika',
+    'Sejarah Indonesia',
+    'Bahasa Inggris',
+    'Pendidikan Jasmani Olahraga dan Kesehatan',
+    'Seni Budaya',
+    'Teknologi Informasi dan Komunikasi',
+    'Informatika',
+    'Prakarya dan Kewirausahaan',
+    'Bahasa Daerah/Jawa',
+    'Aswaja',
+    'Fisika',
+    'Kimia',
+    'Biologi'
+  ];
+
+  // Daftar mata pelajaran pilihan
+  const electiveSubjects = [
+    'Sejarah/Sejarah Peminatan',
+    'Geografi',
+    'Sosiologi',
+    'Ekonomi',
+    'Ekonomi Akuntansi',
+    'Antropologi',
+    'Bahasa dan Sastra Arab',
+    'Bahasa dan Sastra Indonesia',
+    'Bahasa dan Sastra Inggris',
+    'Bahasa Indonesia Tingkat Lanjut',
+    'Bahasa Inggris Tingkat Lanjut',
+    'Keterampilan Bahasa Inggris'
+  ];
 
   // Handle window resize for responsive behavior
   useEffect(() => {
@@ -231,11 +269,12 @@ const RaporApp = () => {
       const nilaiSheet = workbook.Sheets[sheetNames[0]];
       const nilaiData = XLSX.utils.sheet_to_json(nilaiSheet, { header: 1 });
       
-      // Parse info sekolah dari baris 1-5
-      [0, 1, 2, 3, 4].forEach(idx => {
+      // Parse info sekolah dari baris 1-6
+      [0, 1, 2, 3, 4, 5].forEach(idx => {
         if (nilaiData[idx] && nilaiData[idx][0] && nilaiData[idx][1]) {
           const key = nilaiData[idx][0].toLowerCase().trim();
           if (key === 'sekolah') schoolInfo.sekolah = nilaiData[idx][1];
+          else if (key === 'alamat') schoolInfo.alamat = nilaiData[idx][1];
           else if (key === 'kelas') schoolInfo.kelas = nilaiData[idx][1];
           else if (key === 'fase') schoolInfo.fase = nilaiData[idx][1];
           else if (key === 'semester') schoolInfo.semester = nilaiData[idx][1];
@@ -243,8 +282,8 @@ const RaporApp = () => {
         }
       });
 
-      // Find subject columns dynamically from header row (row 7, index 6)
-      const headerRow = nilaiData[6] || [];
+      // Find subject columns dynamically from header row (row 8, index 7 - setelah alamat ditambah)
+      const headerRow = nilaiData[7] || [];
       const subjectColumns = findSubjectColumns(headerRow);
       const headerValidation = validateHeaderRow(headerRow);
       
@@ -261,8 +300,8 @@ const RaporApp = () => {
         return;
       }
 
-      // Parse data siswa dari baris 9+ (index 8+)
-      const nilaiRows = nilaiData.slice(8);
+      // Parse data siswa dari baris 10+ (index 9+)
+      const nilaiRows = nilaiData.slice(9);
       const studentMap = {};
 
       nilaiRows.forEach((row) => {
@@ -357,6 +396,8 @@ const RaporApp = () => {
               izin: row[7] || 0,
               tanpaKet: row[8] || 0
             };
+            // Catatan Wali Kelas dari kolom J (index 9)
+            studentMap[nama].catatanWaliKelas = row[9] || '';
           }
         });
       }
@@ -428,8 +469,8 @@ const RaporApp = () => {
     }, 100);
   };
 
-  const RaporPage1 = ({ student }) => {
-    // Get subjects that have values across all students
+  const RaporPage1 = ({ student, layoutType: passedLayoutType }) => {
+    const currentLayout = passedLayoutType || layoutType;
     const subjectsWithValues = getSubjectsWithValues();
     
     // Display only subjects with values, in the order they appeared in the file
@@ -448,99 +489,197 @@ const RaporApp = () => {
 
     return (
       <div className="bg-white rapor-page-1" style={pageStyle}>
-        {/* Header */}
-        <div className="text-center mb-3 pb-2 border-b-2 border-black">
-          <h1 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>LAPORAN HASIL BELAJAR (RAPOR)</h1>
-          <p className={isMobile ? 'text-xs' : 'text-xs'}>SMA MAMBA'UNNUR - KURIKULUM MERDEKA</p>
-        </div>
-
         {/* Identitas Siswa */}
-        <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+        <div className="mb-3 text-xs" style={{display: 'grid', gridTemplateColumns: '60% 40%', gap: '12px'}}>
           <div>
             <div className="flex mb-1">
-              <span className="font-semibold w-20">Nama Murid</span>
+              <span className="font-semibold w-28">Nama</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.nama || student?.Nama || '-'}</span>
             </div>
             <div className="flex mb-1">
-              <span className="font-semibold w-20">NISN</span>
+              <span className="font-semibold w-28">NIS/NISN</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.nisn || student?.NIS || '-'}</span>
             </div>
             <div className="flex mb-1">
-              <span className="font-semibold w-20">Sekolah</span>
+              <span className="font-semibold w-28">Nama Sekolah</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.sekolah || 'SMA Mamba\'unnur'}</span>
             </div>
             <div className="flex">
-              <span className="font-semibold w-20">Alamat</span>
+              <span className="font-semibold w-28">Alamat</span>
               <span>:</span>
               <span className="flex-1 ml-2 break-words">{student?.identitas?.alamat || '-'}</span>
             </div>
           </div>
           <div>
             <div className="flex mb-1">
-              <span className="font-semibold w-20">Kelas</span>
+              <span className="font-semibold w-28">Kelas</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.kelas || 'X'}</span>
             </div>
             <div className="flex mb-1">
-              <span className="font-semibold w-20">Fase</span>
+              <span className="font-semibold w-28">Fase</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.fase || '-'}</span>
             </div>
             <div className="flex mb-1">
-              <span className="font-semibold w-20">Semester</span>
+              <span className="font-semibold w-28">Semester</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.semester || '1'}</span>
             </div>
             <div className="flex">
-              <span className="font-semibold w-20">Tahun Ajaran</span>
+              <span className="font-semibold w-28">Tahun Pelajaran</span>
               <span>:</span>
               <span className="flex-1 ml-2">{student?.identitas?.tahunAjaran || '2025/2026'}</span>
             </div>
           </div>
         </div>
 
+        {/* Garis Pemisah */}
+        <div className="border-b-2 border-black mb-3"></div>
+
+        {/* Judul Laporan */}
+        <div className="text-center mb-3 pb-2">
+          <h1 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>LAPORAN HASIL BELAJAR</h1>
+        </div>
+
         {/* Tabel Nilai */}
-        <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
-          <thead>
-            <tr className="bg-gray-300">
-              <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-              <th className={`border border-black px-2 py-1 text-left ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-              <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-              <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displaySubjects.map((subject, idx) => {
-              const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
-              const tp2 = subject.data?.TP2 || '';
-              
-              return (
-                <React.Fragment key={idx}>
-                <tr>
-                  <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
-                  <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
-                  <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
-                    {subject.data?.avg || '-'}
-                  </td>
-                  <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
-                    {tp1}
-                  </td>
-                </tr>
-                {tp2 && (
+        {currentLayout === 'kelas10' ? (
+          // Layout Kelas 10 - Tampilan Standar
+          <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
+            <thead>
+              <tr className="bg-gray-300">
+                <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+                <th className={`border border-black px-2 py-1 text-left ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+                <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+                <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displaySubjects.map((subject, idx) => {
+                const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
+                const tp2 = subject.data?.TP2 || '';
+                
+                return (
+                  <React.Fragment key={idx}>
                   <tr>
-                    <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
-                      {tp2}
+                    <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
+                    <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
+                    <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
+                      {subject.data?.avg || '-'}
+                    </td>
+                    <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
+                      {tp1}
                     </td>
                   </tr>
-                )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+                  {tp2 && (
+                    <tr>
+                      <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
+                        {tp2}
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          // Layout Kelas 11/12 - Dengan Kategori Wajib & Pilihan
+          <div>
+            {/* A. Kelompok Mata Pelajaran Wajib */}
+            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
+              <thead>
+                <tr className="bg-gray-300">
+                  <th colSpan="4" className="border border-black px-2 py-2 text-left font-bold">A. Kelompok Mata Pelajaran Wajib</th>
+                </tr>
+                <tr className="bg-gray-300">
+                  <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+                  <th className={`border border-black px-2 py-1 text-left ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+                  <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displaySubjects
+                  .filter(subject => requiredSubjects.includes(subject.name))
+                  .map((subject, idx) => {
+                    const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
+                    const tp2 = subject.data?.TP2 || '';
+                    
+                    return (
+                      <React.Fragment key={idx}>
+                      <tr>
+                        <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
+                        <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
+                        <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
+                          {subject.data?.avg || '-'}
+                        </td>
+                        <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
+                          {tp1}
+                        </td>
+                      </tr>
+                      {tp2 && (
+                        <tr>
+                          <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
+                            {tp2}
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
+                    );
+                  })}
+              </tbody>
+            </table>
+
+            {/* B. Kelompok Mata Pelajaran Pilihan */}
+            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
+              <thead>
+                <tr className="bg-gray-300">
+                  <th colSpan="4" className="border border-black px-2 py-2 text-left font-bold">B. Kelompok Mata Pelajaran Pilihan</th>
+                </tr>
+                <tr className="bg-gray-300">
+                  <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+                  <th className={`border border-black px-2 py-1 text-left ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+                  <th className={`border border-black px-2 py-1 ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displaySubjects
+                  .filter(subject => electiveSubjects.includes(subject.name))
+                  .map((subject, idx) => {
+                    const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
+                    const tp2 = subject.data?.TP2 || '';
+                    
+                    return (
+                      <React.Fragment key={idx}>
+                      <tr>
+                        <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
+                        <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
+                        <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
+                          {subject.data?.avg || '-'}
+                        </td>
+                        <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
+                          {tp1}
+                        </td>
+                      </tr>
+                      {tp2 && (
+                        <tr>
+                          <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
+                            {tp2}
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   };
@@ -570,7 +709,7 @@ const RaporApp = () => {
             <thead>
               <tr className="bg-gray-300">
                 <th className="border border-black px-2 py-2 w-8">No.</th>
-                <th className="border border-black px-2 py-2 text-left">Ekstrakurikuler</th>
+                <th className="border border-black px-2 py-2 text-left" style={{width: '30%'}}>Ekstrakurikuler</th>
                 <th className="border border-black px-2 py-2">Keterangan</th>
               </tr>
             </thead>
@@ -580,7 +719,7 @@ const RaporApp = () => {
                   {student.ekstrakurikuler.map((ekskul, idx) => (
                     <tr key={idx}>
                       <td className="border border-black px-2 py-2 text-center">{idx + 1}</td>
-                      <td className="border border-black px-2 py-2">{ekskul.nama}</td>
+                      <td className="border border-black px-2 py-2" style={{width: '30%'}}>{ekskul.nama}</td>
                       <td className="border border-black px-2 py-2">{ekskul.keterangan}</td>
                     </tr>
                   ))}
@@ -589,19 +728,19 @@ const RaporApp = () => {
                 <>
                   <tr>
                     <td className="border border-black px-2 py-2 text-center">1</td>
-                    <td className="border border-black px-2 py-2">Pramuka</td>
+                    <td className="border border-black px-2 py-2" style={{width: '30%'}}>Pramuka</td>
                     <td className="border border-black px-2 py-2">Trampil dan disiplin dalam kegiatan kepramukaan</td>
                   </tr>
                   <tr>
                     <td className="border border-black px-2 py-2 text-center">2</td>
-                    <td className="border border-black px-2 py-2">PMR</td>
+                    <td className="border border-black px-2 py-2" style={{width: '30%'}}>PMR</td>
                     <td className="border border-black px-2 py-2">Aktif remaja sehat peduli sesama dan kesehatan remaja</td>
                   </tr>
                 </>
               )}
               <tr>
                 <td className="border border-black px-2 py-2 text-center">dst.</td>
-                <td className="border border-black px-2 py-2">-</td>
+                <td className="border border-black px-2 py-2" style={{width: '30%'}}>-</td>
                 <td className="border border-black px-2 py-2">-</td>
               </tr>
             </tbody>
@@ -631,8 +770,8 @@ const RaporApp = () => {
           </div>
           <div>
             <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
-            <div className="border border-black px-2 py-2 text-xs" style={{minHeight: '71px'}}>
-              
+            <div className="border border-black px-2 py-2 text-xs" style={{minHeight: '72px'}}>
+              {student?.catatanWaliKelas || ''}
             </div>
           </div>
         </div>
@@ -647,7 +786,7 @@ const RaporApp = () => {
         <div className="text-xs mt-4">
           {/* Row 1: Orang Tua (left) and Tempat/Tanggal + Wali Kelas (right) */}
           <div className="grid grid-cols-3 gap-6">
-            <div className="text-left">
+            <div className="text-left pl-8">
               <p>Orang Tua/Wali</p>
               <p className="mb-16"></p>
               <p className="border-t border-black pt-1 w-24"></p>
@@ -720,12 +859,16 @@ const RaporApp = () => {
             box-sizing: border-box;
             width: 100%;
             padding: 0;
+            box-shadow: none !important;
+            margin-bottom: 0 !important;
           }
           .rapor-page-2 { 
             page-break-before: auto; 
             box-sizing: border-box;
             width: 100%;
             padding: 0;
+            box-shadow: none !important;
+            margin-bottom: 0 !important;
           }
         }
       `}</style>
@@ -783,8 +926,32 @@ const RaporApp = () => {
                       )}
                     </div>
 
-                    {/* Student Selection */}
+                    {/* Layout Selection Buttons */}
                     {students.length > 0 && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="font-semibold mb-2 text-xs">Layout:</p>
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => setLayoutType('kelas10')}
+                            className={`px-2 py-1 rounded text-xs font-medium transition w-full ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                          >
+                            Kelas 10
+                          </button>
+                          <button
+                            onClick={() => setLayoutType('kelas1112')}
+                            className={`px-2 py-1 rounded text-xs font-medium transition w-full ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                          >
+                            Kelas 11/12
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Student Selection & View Mode & Print Buttons */}
+                  {students.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      {/* Student Selection */}
                       <div>
                         <label className="block font-semibold mb-1 text-xs">Pilih Siswa:</label>
                         <select 
@@ -802,62 +969,61 @@ const RaporApp = () => {
                           ))}
                         </select>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Right: View Mode & Print Buttons */}
-                  {students.length > 0 && (
-                    <div className="flex flex-col gap-1">
                       {/* View Mode Buttons */}
-                      <button
-                        onClick={() => {
-                          setViewMode('single');
-                          if (isMobile) setMobileMenuOpen(false);
-                        }}
-                        className={`inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition w-full ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        1 Siswa
-                      </button>
-                      <button
-                        onClick={() => {
-                          setViewMode('all');
-                          if (isMobile) setMobileMenuOpen(false);
-                        }}
-                        className={`inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition w-full ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Semua
-                      </button>
-
-                      {/* Print Buttons */}
-                      <button
-                        onClick={handlePrint}
-                        className="inline-flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium w-full"
-                      >
-                        <Printer size={14} />
-                        Print
-                      </button>
-                      {viewMode === 'single' && (
+                      <div className="flex gap-1">
                         <button
-                          onClick={handleGenerateAll}
-                          className="inline-flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium w-full"
+                          onClick={() => {
+                            setViewMode('single');
+                            if (isMobile) setMobileMenuOpen(false);
+                          }}
+                          className={`flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                         >
-                          <Printer size={14} />
+                          1 Siswa
+                        </button>
+                        <button
+                          onClick={() => {
+                            setViewMode('all');
+                            if (isMobile) setMobileMenuOpen(false);
+                          }}
+                          className={`flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        >
                           Semua
                         </button>
-                      )}
+                      </div>
+
+                      {/* Print Buttons */}
+                      <div className="flex gap-1">
+                        <button
+                          onClick={handlePrint}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium"
+                        >
+                          <Printer size={14} />
+                          Print
+                        </button>
+                        {viewMode === 'single' && (
+                          <button
+                            onClick={handleGenerateAll}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium"
+                          >
+                            <Printer size={14} />
+                            Semua
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               </>
             ) : (
-              // Desktop: Two-column layout (Upload left, Student controls right)
-              <div className="grid grid-cols-3 gap-6">
-                {/* Left Column: Upload Section */}
-                <div className="col-span-1 border-r border-gray-200 pr-6">
-                  <h2 className="font-semibold mb-3 flex items-center gap-2 text-base">
+              // Desktop: Three-column layout (Upload 15%, Layout 15%, Student 70%)
+              <div className="gap-6" style={{display: 'grid', gridTemplateColumns: '3fr 3fr 14fr'}}>
+                {/* Column 1: Upload Section */}
+                <div>
+                  <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm">
                     <FileSpreadsheet size={20} /> Upload File Excel
                   </h2>
-                  <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-base w-full justify-center">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-sm font-medium w-full justify-center">
                     <Upload size={20} />
                     Pilih File Excel
                     <input 
@@ -874,14 +1040,35 @@ const RaporApp = () => {
                   )}
                 </div>
 
-                {/* Right Columns: Student Selection Controls */}
+                {/* Column 2: Layout Selection */}
                 {students.length > 0 && (
-                  <div className="col-span-2">
-                    {/* Student Selection */}
-                    <div className="mb-4">
+                  <div>
+                    <h3 className="font-semibold mb-2 text-sm">Pilih Layout:</h3>
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => setLayoutType('kelas10')}
+                        className={`px-4 py-2 rounded text-sm font-medium transition w-full ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Layout Kelas 10
+                      </button>
+                      <button
+                        onClick={() => setLayoutType('kelas1112')}
+                        className={`px-4 py-2 rounded text-sm font-medium transition w-full ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Layout Kelas 11/12
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Column 3: Student Selection Controls */}
+                {students.length > 0 && (
+                  <div className="flex flex-col">
+                    {/* Student Selection - aligned with Layout Kelas 10 */}
+                    <div className="mb-1">
                       <label className="block font-semibold mb-2 text-sm">Pilih Siswa:</label>
                       <select 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         onChange={(e) => {
                           setSelectedStudent(students[e.target.value]);
                           setViewMode('single');
@@ -895,43 +1082,36 @@ const RaporApp = () => {
                       </select>
                     </div>
 
-                    {/* View Mode & Print Buttons Row */}
-                    <div className="flex gap-3">
-                      {/* View Mode Buttons */}
-                      <div className="flex gap-2">
+                    {/* View Mode & Print Buttons Row - aligned with Layout Kelas 11/12 */}
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setViewMode('single')}
+                        className={`flex-1 px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Lihat 1 Siswa
+                      </button>
+                      <button
+                        onClick={() => setViewMode('all')}
+                        className={`flex-1 px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Lihat Semua
+                      </button>
+                      <button
+                        onClick={handlePrint}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
+                      >
+                        <Printer size={18} />
+                        {viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa'}
+                      </button>
+                      {viewMode === 'single' && (
                         <button
-                          onClick={() => setViewMode('single')}
-                          className={`px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                          Lihat 1 Siswa
-                        </button>
-                        <button
-                          onClick={() => setViewMode('all')}
-                          className={`px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                          Lihat Semua
-                        </button>
-                      </div>
-
-                      {/* Print Buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handlePrint}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
+                          onClick={handleGenerateAll}
+                          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
                         >
                           <Printer size={18} />
-                          {viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa'}
+                          Generate Semua
                         </button>
-                        {viewMode === 'single' && (
-                          <button
-                            onClick={handleGenerateAll}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
-                          >
-                            <Printer size={18} />
-                            Generate Semua
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -942,26 +1122,71 @@ const RaporApp = () => {
       </div>
 
       {/* Content Area */}
-      <div className={`${isMobile ? 'p-2' : 'p-4'}`}>
-        {/* Rapor Display */}
+      <div className={`${isMobile ? 'p-2' : 'p-4'} print:p-0`}>
+        {/* Rapor Display with Print Preview */}
         {students.length > 0 && (
-          <div className={isMobile ? 'space-y-2' : 'w-full'}>
-            {viewMode === 'single' ? (
-              // Single student view - show both pages
-              <>
-                <RaporPage1 student={selectedStudent} />
-                <RaporPage2 student={selectedStudent} />
-              </>
-            ) : (
-              // All students view
-              <>
-                {students.map((student, index) => (
-                  <React.Fragment key={index}>
-                    <RaporPage1 student={student} />
-                    <RaporPage2 student={student} />
-                  </React.Fragment>
-                ))}
-              </>
+          <div className={`${isMobile || !showPrintPreview ? 'grid grid-cols-1' : 'grid grid-cols-2'} gap-4 print:grid-cols-1`}>
+            {/* Main Rapor Display */}
+            <div className={`${isMobile ? 'space-y-2' : 'mx-auto space-y-0 w-full'} print:m-0 print:max-w-none`} style={!isMobile ? {maxWidth: '210mm'} : {}}>
+              {viewMode === 'single' ? (
+                // Single student view - show both pages
+                <>
+                  <RaporPage1 student={selectedStudent} layoutType={layoutType} />
+                  <div className="border-t-2 border-dashed border-gray-300 py-2 text-center text-xs text-gray-400 print:hidden">
+                    ────── HALAMAN 2 ──────
+                  </div>
+                  <RaporPage2 student={selectedStudent} />
+                </>
+              ) : (
+                // All students view
+                <>
+                  {students.map((student, index) => (
+                    <React.Fragment key={index}>
+                      <RaporPage1 student={student} layoutType={layoutType} />
+                      <div className="border-t-2 border-dashed border-gray-300 py-2 text-center text-xs text-gray-400 print:hidden">
+                        ────── HALAMAN 2 ──────
+                      </div>
+                      <RaporPage2 student={student} />
+                      {index < students.length - 1 && (
+                        <div className="border-t-4 border-double border-gray-400 py-3 my-2 text-center text-xs text-gray-500 font-semibold print:hidden">
+                          ═══════ SISWA BERIKUTNYA ═══════
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {/* Print Preview - Only show on desktop when enabled */}
+            {!isMobile && showPrintPreview && (
+              <div className="bg-gray-100 rounded-lg p-4 h-fit sticky top-20 overflow-y-auto max-h-[calc(100vh-100px)] border-2 border-dashed border-orange-400 print:hidden">
+                <div className="mb-3 pb-2 border-b-2 border-orange-400">
+                  <h3 className="font-bold text-sm text-orange-700">📄 PRATINJAU CETAK</h3>
+                  <p className="text-xs text-gray-600 mt-1">Inilah tampilan rapor saat dicetak</p>
+                </div>
+                
+                {/* Print Preview Content - Scaled version */}
+                <div className="bg-white rounded shadow-lg overflow-hidden scale-50 origin-top-left" style={{width: '200%'}}>
+                  <div style={{transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', padding: '20mm'}}>
+                    {viewMode === 'single' ? (
+                      <>
+                        <RaporPage1 student={selectedStudent} layoutType={layoutType} />
+                        <RaporPage2 student={selectedStudent} />
+                      </>
+                    ) : (
+                      <>
+                        {students.slice(0, 1).map((student, index) => (
+                          <React.Fragment key={index}>
+                            <RaporPage1 student={student} layoutType={layoutType} />
+                            <RaporPage2 student={student} />
+                          </React.Fragment>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
