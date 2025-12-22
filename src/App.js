@@ -340,7 +340,6 @@ const RaporApp = () => {
         
         // Parse kurikulum structure
         parsedCurriculum = parseKurikulum(kurikulumData);
-        setCurriculum(parsedCurriculum);
         console.log('Curriculum parsed:', parsedCurriculum);
         
         // Auto-generate descriptions for each student and subject
@@ -1143,7 +1142,7 @@ const RaporApp = () => {
       <div className={`${isMobile ? 'p-2' : 'p-4'} print:p-0`}>
         {/* Rapor Display with Print Preview */}
         {students.length > 0 && (
-          <div className={`${isMobile || !showPrintPreview ? 'grid grid-cols-1' : 'grid grid-cols-2'} gap-4 print:grid-cols-1`}>
+          <div className="grid grid-cols-1 gap-4 print:grid-cols-1">
             {/* Main Rapor Display */}
             <div className={`${isMobile ? 'space-y-2' : 'mx-auto space-y-0 w-full'} print:m-0 print:max-w-none`} style={!isMobile ? {maxWidth: '210mm'} : {}}>
               {viewMode === 'single' ? (
@@ -1175,37 +1174,6 @@ const RaporApp = () => {
                 </>
               )}
             </div>
-
-            {/* Print Preview - Only show on desktop when enabled */}
-            {!isMobile && showPrintPreview && (
-              <div className="bg-gray-100 rounded-lg p-4 h-fit sticky top-20 overflow-y-auto max-h-[calc(100vh-100px)] border-2 border-dashed border-orange-400 print:hidden">
-                <div className="mb-3 pb-2 border-b-2 border-orange-400">
-                  <h3 className="font-bold text-sm text-orange-700">📄 PRATINJAU CETAK</h3>
-                  <p className="text-xs text-gray-600 mt-1">Inilah tampilan rapor saat dicetak</p>
-                </div>
-                
-                {/* Print Preview Content - Scaled version */}
-                <div className="bg-white rounded shadow-lg overflow-hidden scale-50 origin-top-left" style={{width: '200%'}}>
-                  <div style={{transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', padding: '20mm'}}>
-                    {viewMode === 'single' ? (
-                      <>
-                        <RaporPage1 student={selectedStudent} layoutType={layoutType} />
-                        <RaporPage2 student={selectedStudent} />
-                      </>
-                    ) : (
-                      <>
-                        {students.slice(0, 1).map((student, index) => (
-                          <React.Fragment key={index}>
-                            <RaporPage1 student={student} layoutType={layoutType} />
-                            <RaporPage2 student={student} />
-                          </React.Fragment>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
