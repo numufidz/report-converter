@@ -9,8 +9,6 @@ const RaporApp = () => {
   const [subjectOrder, setSubjectOrder] = useState([]); // Track subject order from file
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [curriculum, setCurriculum] = useState({}); // New: Store curriculum data
-  const [showPrintPreview, setShowPrintPreview] = useState(false); // Toggle print preview
   const [layoutType, setLayoutType] = useState('kelas10'); // 'kelas10' or 'kelas1112'
 
   // Daftar mata pelajaran wajib
