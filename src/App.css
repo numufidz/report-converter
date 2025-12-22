@@ -97,3 +97,9 @@
 
   table tr {
     page-break-inside: avoid;
+  }
+
+  /* Prevent category header from repeating on next page */
+  .category-header {
+    page-break-after: avoid !important;
+  }
