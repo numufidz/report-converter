@@ -103,3 +103,112 @@
   .category-header {
     page-break-after: avoid !important;
   }
+
+/* ===== PRINT HEADER STYLES ===== */
+.print-header {
+  display: none;
+}
+
+@media print {
+  .print-header {
+    position: fixed;
+    top: 0;
+    left: 20mm;
+    right: 20mm;
+    height: auto;
+    background: white;
+    padding: 10mm 0;
+    border-bottom: 2px solid black;
+    display: block;
+    page-break-after: avoid;
+    margin-bottom: 45mm;
+  }
+
+  .print-header-grid {
+    display: grid;
+    grid-template-columns: 60% 40%;
+    gap: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .print-header-col div {
+    display: flex;
+    margin-bottom: 6px;
+  }
+
+  .print-header-col span.label {
+    font-weight: bold;
+    width: 110px;
+    flex-shrink: 0;
+  }
+
+  .print-header-col span.colon {
+    margin-right: 8px;
+  }
+
+  .print-header-col span.value {
+    flex: 1;
+    word-break: break-word;
+  }
+
+  /* ===== PRINT FOOTER STYLES ===== */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 20mm;
+    right: 20mm;
+    height: auto;
+    background: white;
+    padding: 5mm 0;
+    border-top: 1px solid black;
+    font-family: 'Courier New', Courier, monospace;
+    font-style: italic;
+    font-size: 11px;
+    display: block;
+    margin-top: 25mm;
+  }
+
+  .footer-separator {
+    border-top: 1px solid black;
+    margin-bottom: 4px;
+  }
+
+  .footer-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .footer-left {
+    text-align: left;
+  }
+
+  .footer-center {
+    text-align: center;
+  }
+
+  .footer-right {
+    text-align: right;
+  }
+
+  /* CSS Counter untuk page numbering */
+  body {
+    counter-reset: page;
+  }
+
+  .print-page {
+    page-break-after: always;
+    counter-increment: page;
+  }
+
+  .footer-right::after {
+    content: 'Halaman: ' counter(page);
+  }
+
+  /* Hide inline identity saat print (sudah ada di header) */
+  .inline-identity {
+    display: none !important;
+  }
+}
