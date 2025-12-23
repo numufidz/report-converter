@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, X } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, X, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import html2pdf from 'html2pdf.js';
 
 const RaporApp = () => {
   const [students, setStudents] = useState([]);
@@ -91,16 +92,16 @@ const RaporApp = () => {
   // Function to find subject columns dynamically from header
   const findSubjectColumns = (headerRow) => {
     const subjectColumns = {};
-    
+
     // Trim and lowercase header for comparison
-    const trimmedHeader = headerRow.map(h => 
+    const trimmedHeader = headerRow.map(h =>
       h ? String(h).trim().toLowerCase() : ''
     );
-    
+
     allSubjectNames.forEach(subjectName => {
       const subjectLower = subjectName.toLowerCase();
       let foundIndex = -1;
-      
+
       // Find the column index that contains the subject name
       for (let i = 0; i < trimmedHeader.length; i++) {
         if (trimmedHeader[i] === subjectLower) {
@@ -108,7 +109,7 @@ const RaporApp = () => {
           break;
         }
       }
-      
+
       if (foundIndex !== -1) {
         subjectColumns[subjectName] = {
           ketIndex: foundIndex,
@@ -116,38 +117,38 @@ const RaporApp = () => {
         };
       }
     });
-    
+
     return subjectColumns;
   };
 
   // Function to validate header and identify unrecognized subjects
   const validateHeaderRow = (headerRow) => {
-    const trimmedHeader = headerRow.map(h => 
+    const trimmedHeader = headerRow.map(h =>
       h ? String(h).trim().toLowerCase() : ''
     );
-    
+
     const recognizedSubjects = [];
     const unrecognizedSubjects = new Set();
-    
+
     // Check recognized subjects
     allSubjectNames.forEach(subjectName => {
       if (trimmedHeader.includes(subjectName.toLowerCase())) {
         recognizedSubjects.push(subjectName);
       }
     });
-    
+
     // Check for unrecognized subjects (exclude system columns)
     const systemColumns = ['no', 'nis', 'nama', 'rata-rata', 'keterangan', 'sakit', 'izin', 'tanpa', 'kepala', 'wali', 'kelas', 'sekolah', 'fase', 'semester', 'tahun', 'tempat', 'tanggal', 'pramuka', 'pmr'];
-    
+
     trimmedHeader.forEach((header) => {
-      if (header && 
-          !systemColumns.includes(header) && 
-          !recognizedSubjects.map(s => s.toLowerCase()).includes(header) &&
-          !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa|kelompok)$/)) {
+      if (header &&
+        !systemColumns.includes(header) &&
+        !recognizedSubjects.map(s => s.toLowerCase()).includes(header) &&
+        !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa|kelompok)$/)) {
         unrecognizedSubjects.add(header);
       }
     });
-    
+
     return {
       recognizedSubjects,
       unrecognizedSubjects: Array.from(unrecognizedSubjects)
@@ -157,15 +158,15 @@ const RaporApp = () => {
   // New function: Parse curriculum from Sheet 2
   const parseKurikulum = (kurikulumData) => {
     const curriculumObj = {};
-    
+
     // Start from row 2 (index 1) - skip header
     for (let i = 1; i < kurikulumData.length; i++) {
       const row = kurikulumData[i];
       if (!row || !row[1]) break; // Stop if no mapel name
-      
+
       const mapelName = String(row[1] || '').trim();
       if (!mapelName || mapelName === '') continue;
-      
+
       // Structure: Col 0=No, 1=Mapel, 2=Kelompok, 3=Kelas10, 4=TP1_10, 5=TP2_10, 6=Kelas11, 7=TP1_11, 8=TP2_11, 9=Kelas12, 10=TP1_12, 11=TP2_12
       curriculumObj[mapelName] = {
         class_10: {
@@ -182,35 +183,35 @@ const RaporApp = () => {
         }
       };
     }
-    
+
     return curriculumObj;
   };
 
   // New function: Generate descriptions based on KET vs PENG comparison
   const generateDescriptions = (ket, peng, mapelName, studentClass, curriculumData) => {
     const defaultTemplate = 'Kompetensi dasar tercapai dengan baik';
-    
+
     // Parse values
     const ketVal = parseFloat(String(ket || '').replace(',', '.'));
     const pengVal = parseFloat(String(peng || '').replace(',', '.'));
-    
+
     // Get curriculum data for the subject and class - use parameter instead of state
     const currMapel = curriculumData[mapelName];
     let classKey = 'class_10'; // Default
-    
+
     if (studentClass && String(studentClass).includes('11')) {
       classKey = 'class_11';
     } else if (studentClass && String(studentClass).includes('12')) {
       classKey = 'class_12';
     }
-    
+
     const tp = currMapel?.[classKey];
     let tp1Text = tp?.tp1 || '';
     let tp2Text = tp?.tp2 || '';
-    
+
     // Debug log
     console.log(`generateDescriptions: mapel=${mapelName}, class=${classKey}, tp1=${tp1Text}, tp2=${tp2Text}, ket=${ketVal}, peng=${pengVal}`);
-    
+
     // If no curriculum data, use defaults
     if (!tp1Text && !tp2Text) {
       return {
@@ -218,7 +219,7 @@ const RaporApp = () => {
         row2: ''
       };
     }
-    
+
     // If either value is invalid, use default
     if (isNaN(ketVal) || isNaN(pengVal)) {
       return {
@@ -226,7 +227,7 @@ const RaporApp = () => {
         row2: ''
       };
     }
-    
+
     // Compare values
     if (ketVal > pengVal) {
       // KET > PENG: tp1 with "Mencapai kompetensi..." prefix
@@ -258,7 +259,7 @@ const RaporApp = () => {
       const data = await file.arrayBuffer();
       // Parse CSV with semicolon delimiter
       const workbook = XLSX.read(data, { delimiter: ';' });
-      
+
       const sheetNames = workbook.SheetNames;
       console.log('Available sheets:', sheetNames);
 
@@ -266,7 +267,7 @@ const RaporApp = () => {
       const schoolInfo = {};
       const nilaiSheet = workbook.Sheets[sheetNames[0]];
       const nilaiData = XLSX.utils.sheet_to_json(nilaiSheet, { header: 1 });
-      
+
       // Parse info sekolah dari baris 1-6
       [0, 1, 2, 3, 4, 5].forEach(idx => {
         if (nilaiData[idx] && nilaiData[idx][0] && nilaiData[idx][1]) {
@@ -284,15 +285,15 @@ const RaporApp = () => {
       const headerRow = nilaiData[7] || [];
       const subjectColumns = findSubjectColumns(headerRow);
       const headerValidation = validateHeaderRow(headerRow);
-      
+
       console.log('Dynamic subject columns found:', subjectColumns);
       console.log('Header validation:', headerValidation);
-      
+
       // Alert user if there are unrecognized subjects
       if (headerValidation.unrecognizedSubjects.length > 0) {
         console.warn('⚠️ Unrecognized subjects (akan diabaikan):', headerValidation.unrecognizedSubjects);
       }
-      
+
       if (headerValidation.recognizedSubjects.length === 0) {
         alert('❌ Error: Tidak ada mata pelajaran yang dikenali di file!\n\nPastikan nama mata pelajaran di baris header sudah benar.');
         return;
@@ -323,7 +324,7 @@ const RaporApp = () => {
         Object.entries(subjectColumns).forEach(([subjectName, indices]) => {
           const ketVal = row[indices.ketIndex];
           const pengVal = row[indices.pengIndex];
-          
+
           studentMap[nama].subjects[subjectName] = {
             KET: ketVal,
             PENG: pengVal,
@@ -337,11 +338,11 @@ const RaporApp = () => {
       if (sheetNames.length > 1) {
         const kurikulumSheet = workbook.Sheets[sheetNames[1]];
         const kurikulumData = XLSX.utils.sheet_to_json(kurikulumSheet, { header: 1 });
-        
+
         // Parse kurikulum structure
         parsedCurriculum = parseKurikulum(kurikulumData);
         console.log('Curriculum parsed:', parsedCurriculum);
-        
+
         // Auto-generate descriptions for each student and subject
         Object.keys(studentMap).forEach((namaStudent) => {
           const student = studentMap[namaStudent];
@@ -364,7 +365,7 @@ const RaporApp = () => {
       if (sheetNames.length > 2) {
         const pelengkapSheet = workbook.Sheets[sheetNames[2]];
         const pelengkapData = XLSX.utils.sheet_to_json(pelengkapSheet, { header: 1 });
-        
+
         // Parse info tambahan dari baris 1-4
         [0, 1, 2, 3].forEach(idx => {
           if (pelengkapData[idx] && pelengkapData[idx][0] && pelengkapData[idx][1]) {
@@ -404,24 +405,24 @@ const RaporApp = () => {
       }
 
       const processedStudents = Object.values(studentMap);
-      
+
       // Save subject order from the file
       const orderedSubjects = Object.keys(subjectColumns);
       setSubjectOrder(orderedSubjects);
-      
+
       setStudents(processedStudents);
       if (processedStudents.length > 0) {
         setSelectedStudent(processedStudents[0]);
       }
-      
+
       // Build detailed success message
       let successMessage = `✅ Berhasil memuat ${processedStudents.length} siswa dari ${sheetNames.length} sheet\n`;
       successMessage += `📚 Mata pelajaran terdeteksi: ${orderedSubjects.length}`;
-      
+
       if (Object.keys(parsedCurriculum).length > 0) {
         successMessage += `\n📖 Kurikulum dimuat: ${Object.keys(parsedCurriculum).length} mapel`;
       }
-      
+
       if (headerValidation.unrecognizedSubjects.length > 0) {
         successMessage += `\n\n⚠️ ${headerValidation.unrecognizedSubjects.length} mata pelajaran tidak dikenali (diabaikan):\n`;
         successMessage += headerValidation.unrecognizedSubjects.slice(0, 5).join(', ');
@@ -429,7 +430,7 @@ const RaporApp = () => {
           successMessage += `, +${headerValidation.unrecognizedSubjects.length - 5} lainnya`;
         }
       }
-      
+
       alert(successMessage);
     } catch (error) {
       console.error('Error reading file:', error);
@@ -440,9 +441,9 @@ const RaporApp = () => {
   const calculateAverage = (ket, peng) => {
     const ketVal = parseFloat(String(ket).replace(',', '.'));
     const pengVal = parseFloat(String(peng).replace(',', '.'));
-    
+
     if (isNaN(ketVal) || isNaN(pengVal)) return '-';
-    
+
     const avg = (ketVal + pengVal) / 2;
     return avg.toFixed(2);
   };
@@ -470,10 +471,133 @@ const RaporApp = () => {
     }, 100);
   };
 
+  const handleDownloadPDF = async () => {
+    // Ambil semua elemen halaman rapor yang saat ini ada di DOM
+    const raporPages = document.querySelectorAll('.rapor-page-1, .rapor-page-2');
+
+    if (raporPages.length === 0) {
+      alert('Tidak ada data rapor untuk diunduh. Harap upload file terlebih dahulu.');
+      return;
+    }
+
+    // Buat container sementara untuk menampung kloning
+    // Gunakan opacity 1 agar tertangkap kamera html2canvas, tapi z-index -9999 agar tersembunyi
+    const container = document.createElement('div');
+    container.style.width = '210mm';
+    container.style.position = 'fixed';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.style.zIndex = '-9999';
+    container.style.opacity = '1';
+    container.style.backgroundColor = 'white';
+    document.body.appendChild(container);
+
+    try {
+      // Loop untuk setiap halaman asli dan buat klov dengan footer
+      raporPages.forEach((page, idx) => {
+        // Wrapper per halaman A4
+        const pageWrapper = document.createElement('div');
+        pageWrapper.style.width = '210mm';
+        pageWrapper.style.height = '296.5mm'; // Presisi A4
+        pageWrapper.style.position = 'relative';
+        pageWrapper.style.backgroundColor = 'white';
+        pageWrapper.style.boxSizing = 'border-box';
+        pageWrapper.style.padding = '15mm 15mm 30mm 15mm';
+        pageWrapper.style.overflow = 'hidden';
+
+        // Klon isi halaman
+        const clone = page.cloneNode(true);
+        clone.style.margin = '0';
+        clone.style.boxShadow = 'none';
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+
+        pageWrapper.appendChild(clone);
+
+        // Cari informasi siswa dari data untuk footer
+        const studentIdx = viewMode === 'single' ? students.indexOf(selectedStudent) : Math.floor(idx / 2);
+        const student = students[studentIdx];
+        const studentName = student?.Nama || '-';
+        const studentKelas = student?.identitas?.kelas || '-';
+        const pageNum = (idx % 2) + 1;
+
+        // Buat elemen Footer
+        const footer = document.createElement('div');
+        footer.style.position = 'absolute';
+        footer.style.bottom = '10mm';
+        footer.style.left = '15mm';
+        footer.style.right = '15mm';
+        footer.style.fontFamily = "'Courier New', Courier, monospace";
+        footer.style.fontStyle = 'italic';
+        footer.style.fontSize = '12px'; // Sedikit lebih besar agar makin jelas
+        footer.style.color = 'black';
+
+        // Garis horizontal footer
+        const hr = document.createElement('div');
+        hr.style.borderTop = '1px solid black';
+        hr.style.width = '100%';
+        hr.style.marginBottom = '6px';
+
+        const footerContent = document.createElement('div');
+        footerContent.style.display = 'flex';
+        footerContent.style.justifyContent = 'space-between';
+        footerContent.innerHTML = `
+          <span>${studentKelas} | ${studentName}</span>
+          <span>Halaman: ${pageNum}</span>
+        `;
+
+        footer.appendChild(hr);
+        footer.appendChild(footerContent);
+        pageWrapper.appendChild(footer);
+
+        // Tambahkan ke container
+        container.appendChild(pageWrapper);
+
+        // Tambahkan page break library
+        if (idx < raporPages.length - 1) {
+          const pb = document.createElement('div');
+          pb.className = 'html2pdf__page-break';
+          container.appendChild(pb);
+        }
+      });
+
+      // Tunggu render DOM selesai
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const opt = {
+        margin: 0,
+        filename: viewMode === 'single'
+          ? `Rapor_${selectedStudent?.Nama?.replace(/\s+/g, '_')}.pdf`
+          : 'Rapor_Semua_Siswa.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false,
+          scrollY: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Simpan PDF
+      await html2pdf().set(opt).from(container).save();
+
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      alert('Gagal membuat PDF. Silakan gunakan fungsi Print browser sebagai alternatif.');
+    } finally {
+      // Hapus container sementara
+      if (document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
+    }
+  };
+
   const RaporPage1 = ({ student, layoutType: passedLayoutType }) => {
     const currentLayout = passedLayoutType || layoutType;
     const subjectsWithValues = getSubjectsWithValues();
-    
+
     // Display only subjects with values, in the order they appeared in the file
     const displaySubjects = subjectsWithValues.map(subjectName => ({
       name: subjectName,
@@ -491,7 +615,7 @@ const RaporApp = () => {
     return (
       <div className="bg-white rapor-page-1" style={pageStyle}>
         {/* Identitas Siswa */}
-        <div className="mb-3 text-xs" style={{display: 'grid', gridTemplateColumns: '60% 40%', gap: '12px'}}>
+        <div className="mb-3 text-xs" style={{ display: 'grid', gridTemplateColumns: '60% 40%', gap: '12px' }}>
           <div>
             <div className="flex mb-1">
               <span className="font-semibold w-28">Nama</span>
@@ -549,12 +673,12 @@ const RaporApp = () => {
         {/* Tabel Nilai */}
         {currentLayout === 'kelas10' ? (
           // Layout Kelas 10 - Tampilan Standar
-          <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed'}}>
+          <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{width: '5%'}} />
-              <col style={{width: '30%'}} />
-              <col style={{width: '8%'}} />
-              <col style={{width: '57%'}} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '30%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '57%' }} />
             </colgroup>
             <thead>
               <tr className="bg-gray-300">
@@ -568,26 +692,26 @@ const RaporApp = () => {
               {displaySubjects.map((subject, idx) => {
                 const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
                 const tp2 = subject.data?.TP2 || '';
-                
+
                 return (
                   <React.Fragment key={idx}>
-                  <tr>
-                    <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
-                    <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
-                    <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
-                      {subject.data?.avg || '-'}
-                    </td>
-                    <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
-                      {tp1}
-                    </td>
-                  </tr>
-                  {tp2 && (
                     <tr>
-                      <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
-                        {tp2}
+                      <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{subject.name}</td>
+                      <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
+                        {subject.data?.avg || '-'}
+                      </td>
+                      <td className="border-t border-r border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                        {tp1}
                       </td>
                     </tr>
-                  )}
+                    {tp2 && (
+                      <tr>
+                        <td className="border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                          {tp2}
+                        </td>
+                      </tr>
+                    )}
                   </React.Fragment>
                 );
               })}
@@ -597,12 +721,12 @@ const RaporApp = () => {
           // Layout Kelas 11/12 - Dua Tabel dengan Gap
           <div>
             {/* Tabel 1 - Mata Pelajaran Wajib */}
-            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed'}}>
+            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{width: '5%'}} />
-                <col style={{width: '30%'}} />
-                <col style={{width: '8%'}} />
-                <col style={{width: '57%'}} />
+                <col style={{ width: '5%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '57%' }} />
               </colgroup>
               <thead>
                 <tr className="bg-gray-300">
@@ -621,26 +745,26 @@ const RaporApp = () => {
                   .map((subject, idx) => {
                     const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
                     const tp2 = subject.data?.TP2 || '';
-                    
+
                     return (
                       <React.Fragment key={idx}>
-                      <tr>
-                        <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
-                        <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
-                        <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
-                          {subject.data?.avg || '-'}
-                        </td>
-                        <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
-                          {tp1}
-                        </td>
-                      </tr>
-                      {tp2 && (
                         <tr>
-                          <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
-                            {tp2}
+                          <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
+                          <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{subject.name}</td>
+                          <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
+                            {subject.data?.avg || '-'}
+                          </td>
+                          <td className="border-t border-r border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                            {tp1}
                           </td>
                         </tr>
-                      )}
+                        {tp2 && (
+                          <tr>
+                            <td className="border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                              {tp2}
+                            </td>
+                          </tr>
+                        )}
                       </React.Fragment>
                     );
                   })}
@@ -651,12 +775,12 @@ const RaporApp = () => {
             <div className="mb-6"></div>
 
             {/* Tabel 2 - Mata Pelajaran Pilihan */}
-            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed'}}>
+            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{width: '5%'}} />
-                <col style={{width: '30%'}} />
-                <col style={{width: '8%'}} />
-                <col style={{width: '57%'}} />
+                <col style={{ width: '5%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '57%' }} />
               </colgroup>
               <thead>
                 <tr className="bg-gray-300">
@@ -675,26 +799,26 @@ const RaporApp = () => {
                   .map((subject, idx) => {
                     const tp1 = subject.data?.TP1 || 'Mencapai kompetensi dengan baik dalam mengaplikasikan konsep yang telah dipelajari dalam berbagai konteks.';
                     const tp2 = subject.data?.TP2 || '';
-                    
+
                     return (
                       <React.Fragment key={idx}>
-                      <tr>
-                        <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{idx + 1}</td>
-                        <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>{subject.name}</td>
-                        <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{fontSize: isMobile ? '10px' : '12px'}}>
-                          {subject.data?.avg || '-'}
-                        </td>
-                        <td className="border-t border-r border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black'}}>
-                          {tp1}
-                        </td>
-                      </tr>
-                      {tp2 && (
                         <tr>
-                          <td className="border-r border-b border-l border-black px-1" style={{fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem'}}>
-                            {tp2}
+                          <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
+                          <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{subject.name}</td>
+                          <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
+                            {subject.data?.avg || '-'}
+                          </td>
+                          <td className="border-t border-r border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                            {tp1}
                           </td>
                         </tr>
-                      )}
+                        {tp2 && (
+                          <tr>
+                            <td className="border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                              {tp2}
+                            </td>
+                          </tr>
+                        )}
                       </React.Fragment>
                     );
                   })}
@@ -727,11 +851,11 @@ const RaporApp = () => {
 
         {/* Ekstrakurikuler */}
         <div className="mb-3">
-          <table className="w-full border-collapse text-xs" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
+          <table className="w-full border-collapse text-xs" style={{ borderCollapse: 'collapse', borderSpacing: '0' }}>
             <thead>
               <tr className="bg-gray-300">
                 <th className="border border-black px-2 py-2 w-8">No.</th>
-                <th className="border border-black px-2 py-2 text-left" style={{width: '30%'}}>Ekstrakurikuler</th>
+                <th className="border border-black px-2 py-2 text-left" style={{ width: '30%' }}>Ekstrakurikuler</th>
                 <th className="border border-black px-2 py-2">Keterangan</th>
               </tr>
             </thead>
@@ -741,7 +865,7 @@ const RaporApp = () => {
                   {student.ekstrakurikuler.map((ekskul, idx) => (
                     <tr key={idx}>
                       <td className="border border-black px-2 py-2 text-center">{idx + 1}</td>
-                      <td className="border border-black px-2 py-2" style={{width: '30%'}}>{ekskul.nama}</td>
+                      <td className="border border-black px-2 py-2" style={{ width: '30%' }}>{ekskul.nama}</td>
                       <td className="border border-black px-2 py-2">{ekskul.keterangan}</td>
                     </tr>
                   ))}
@@ -750,12 +874,12 @@ const RaporApp = () => {
                 <>
                   <tr>
                     <td className="border border-black px-2 py-2 text-center">1</td>
-                    <td className="border border-black px-2 py-2" style={{width: '30%'}}>Pramuka</td>
+                    <td className="border border-black px-2 py-2" style={{ width: '30%' }}>Pramuka</td>
                     <td className="border border-black px-2 py-2">Trampil dan disiplin dalam kegiatan kepramukaan</td>
                   </tr>
                   <tr>
                     <td className="border border-black px-2 py-2 text-center">2</td>
-                    <td className="border border-black px-2 py-2" style={{width: '30%'}}>PMR</td>
+                    <td className="border border-black px-2 py-2" style={{ width: '30%' }}>PMR</td>
                     <td className="border border-black px-2 py-2">Aktif remaja sehat peduli sesama dan kesehatan remaja</td>
                   </tr>
                 </>
@@ -768,7 +892,7 @@ const RaporApp = () => {
         <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
           <div>
             <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Ketidakhadiran</div>
-            <table className="w-full border-collapse" style={{borderCollapse: 'collapse', borderSpacing: '0'}}>
+            <table className="w-full border-collapse" style={{ borderCollapse: 'collapse', borderSpacing: '0' }}>
               <tbody>
                 <tr>
                   <td className="border border-black px-2 py-1">Sakit</td>
@@ -787,7 +911,7 @@ const RaporApp = () => {
           </div>
           <div>
             <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
-            <div className="border border-black px-2 py-2 text-xs" style={{minHeight: '72px'}}>
+            <div className="border border-black px-2 py-2 text-xs" style={{ minHeight: '72px' }}>
               {student?.catatanWaliKelas || ''}
             </div>
           </div>
@@ -881,6 +1005,7 @@ const RaporApp = () => {
           }
           .rapor-page-2 { 
             page-break-before: auto; 
+            page-break-after: always;
             box-sizing: border-box;
             width: 100%;
             padding: 0;
@@ -929,9 +1054,9 @@ const RaporApp = () => {
                       <label className="inline-flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-base w-full justify-center">
                         <Upload size={20} />
                         Pilih File
-                        <input 
-                          type="file" 
-                          accept=".xlsx,.xls" 
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls"
                           onChange={handleFileUpload}
                           className="hidden"
                         />
@@ -971,7 +1096,7 @@ const RaporApp = () => {
                       {/* Student Selection */}
                       <div>
                         <label className="block font-semibold mb-1 text-xs">Pilih Siswa:</label>
-                        <select 
+                        <select
                           className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                           onChange={(e) => {
                             setSelectedStudent(students[e.target.value]);
@@ -987,7 +1112,7 @@ const RaporApp = () => {
                         </select>
                       </div>
 
-                      {/* View Mode Buttons */}
+                      {/* View Mode & Print Buttons */}
                       <div className="flex gap-1">
                         <button
                           onClick={() => {
@@ -1007,10 +1132,6 @@ const RaporApp = () => {
                         >
                           Semua
                         </button>
-                      </div>
-
-                      {/* Print Buttons */}
-                      <div className="flex gap-1">
                         <button
                           onClick={handlePrint}
                           className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium"
@@ -1018,15 +1139,13 @@ const RaporApp = () => {
                           <Printer size={14} />
                           Print
                         </button>
-                        {viewMode === 'single' && (
-                          <button
-                            onClick={handleGenerateAll}
-                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium"
-                          >
-                            <Printer size={14} />
-                            Semua
-                          </button>
-                        )}
+                        <button
+                          onClick={handleDownloadPDF}
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium"
+                        >
+                          <Download size={14} />
+                          PDF
+                        </button>
                       </div>
                     </div>
                   )}
@@ -1034,7 +1153,7 @@ const RaporApp = () => {
               </>
             ) : (
               // Desktop: Three-column layout (Upload 15%, Layout 15%, Student 70%)
-              <div className="gap-6" style={{display: 'grid', gridTemplateColumns: '3fr 3fr 14fr'}}>
+              <div className="gap-6" style={{ display: 'grid', gridTemplateColumns: '3fr 3fr 14fr' }}>
                 {/* Column 1: Upload Section */}
                 <div>
                   <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm">
@@ -1043,9 +1162,9 @@ const RaporApp = () => {
                   <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-sm font-medium w-full justify-center">
                     <Upload size={20} />
                     Pilih File Excel
-                    <input 
-                      type="file" 
-                      accept=".xlsx,.xls" 
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
@@ -1084,7 +1203,7 @@ const RaporApp = () => {
                     {/* Student Selection - aligned with Layout Kelas 10 */}
                     <div className="mb-1">
                       <label className="block font-semibold mb-2 text-sm">Pilih Siswa:</label>
-                      <select 
+                      <select
                         className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         onChange={(e) => {
                           setSelectedStudent(students[e.target.value]);
@@ -1108,6 +1227,12 @@ const RaporApp = () => {
                         Lihat 1 Siswa
                       </button>
                       <button
+                        onClick={() => setViewMode('all')}
+                        className={`flex-1 px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Lihat Semua
+                      </button>
+                      <button
                         onClick={handlePrint}
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
                       >
@@ -1115,20 +1240,12 @@ const RaporApp = () => {
                         {viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa'}
                       </button>
                       <button
-                        onClick={() => setViewMode('all')}
-                        className={`flex-1 px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        onClick={handleDownloadPDF}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
                       >
-                        Lihat Semua
+                        <Download size={18} />
+                        Unduh PDF
                       </button>
-                      {viewMode === 'single' && (
-                        <button
-                          onClick={handleGenerateAll}
-                          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
-                        >
-                          <Printer size={18} />
-                          Generate Semua
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
@@ -1144,7 +1261,7 @@ const RaporApp = () => {
         {students.length > 0 && (
           <div className="grid grid-cols-1 gap-4 print:grid-cols-1">
             {/* Main Rapor Display */}
-            <div className={`${isMobile ? 'space-y-2' : 'mx-auto space-y-0 w-full'} print:m-0 print:max-w-none`} style={!isMobile ? {maxWidth: '210mm'} : {}}>
+            <div className={`${isMobile ? 'space-y-2' : 'mx-auto space-y-0 w-full'} print:m-0 print:max-w-none`} style={!isMobile ? { maxWidth: '210mm' } : {}}>
               {viewMode === 'single' ? (
                 // Single student view - show both pages
                 <>
