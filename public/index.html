@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
-    <meta name="theme-color" content="#0066cc" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="RAPOR" />
-    <meta
-      name="description"
-      content="Aplikasi RAPOR - Sistem Manajemen Laporan Hasil Belajar Siswa dengan dukungan offline"
-    />
-    <meta name="keywords" content="rapor, laporan, hasil belajar, siswa, sekolah, pendidikan" />
-    <meta name="author" content="RAPOR App" />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>RAPOR - Laporan Hasil Belajar</title>
-  </head>
-  <body>
-    <noscript>Anda perlu mengaktifkan JavaScript untuk menjalankan aplikasi ini.</noscript>
-    <div id="root"></div>
-    <script>
-      // Register Service Worker untuk PWA support
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('%PUBLIC_URL%/service-worker.js')
-            .then(registration => {
-              console.log('ServiceWorker berhasil didaftarkan:', registration);
-            })
-            .catch(error => {
-              console.log('ServiceWorker gagal didaftarkan:', error);
-            });
-        });
-      }
-    </script>
-  </body>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <meta name="theme-color" content="#1e40af" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Rapor Kurmer" />
+  <meta name="description" content="Aplikasi Rapor - Sistem Manajemen Laporan Hasil Belajar Siswa Kurikulum Merdeka" />
+  <meta name="keywords" content="rapor, laporan, hasil belajar, siswa, sekolah, pendidikan" />
+  <meta name="author" content="RAPOR App" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/icons/icon-192.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <title>Aplikasi Rapor Kurikulum Merdeka</title>
+</head>
+
+<body>
+  <noscript>Anda perlu mengaktifkan JavaScript untuk menjalankan aplikasi ini.</noscript>
+  <div id="root"></div>
+  <script>
+    // Register Service Worker untuk PWA support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('%PUBLIC_URL%/service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker berhasil didaftarkan:', registration);
+          })
+          .catch(error => {
+            console.log('ServiceWorker gagal didaftarkan:', error);
+          });
+      });
+    }
+  </script>
+</body>
+
 </html>

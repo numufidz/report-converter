@@ -33,30 +33,18 @@ npm run build
 
 ---
 
-## 📚 Dokumentasi
+## 📚 Dokumentasi Utama
 
-Semua dokumentasi tersedia di folder **[`docs/`](docs/)**.
+Semua panduan terbaru telah disatukan di satu file utama untuk memudahkan Bapak:
 
-### **Mulai dari Sini:**
+👉 **[PANDUAN_UTAMA.md](docs/PANDUAN_UTAMA.md)** (Panduan Lengkap & Terupdate)
 
-#### 1️⃣ **Jawaban Cepat** (2-5 menit)
-- **[QUICK_ANSWER.md](docs/QUICK_ANSWER.md)** - Jawaban dalam 30 detik
-- **[COMPLETE_ANSWER_EDGE_CASES.md](docs/COMPLETE_ANSWER_EDGE_CASES.md)** - Jawaban lengkap dengan code
+---
 
-#### 2️⃣ **Fitur Utama**
-- **[DYNAMIC_COLUMN_MAPPING.md](docs/DYNAMIC_COLUMN_MAPPING.md)** - Penjelasan feature dynamic column mapping
-- **[SUMMARY_IMPLEMENTATION.md](docs/SUMMARY_IMPLEMENTATION.md)** - Ringkasan implementasi lengkap
+### Folder Dokumentasi (`docs/`)
+- **[REKAP_PERBAIKAN.md](docs/REKAP_PERBAIKAN.md)**: Ringkasan teknis perbaikan terakhir (Font Size, Menu 1-5, PWA).
+- **[archive/](docs/archive/)**: Folder yang berisi arsip dokumentasi teknis versi lama.
 
-#### 3️⃣ **Edge Cases & Error Handling**
-- **[EDGE_CASES_SUMMARY.md](docs/EDGE_CASES_SUMMARY.md)** - Ringkasan edge cases
-- **[EDGE_CASE_HANDLING_DETAILED.md](docs/EDGE_CASE_HANDLING_DETAILED.md)** - Detail teknis edge cases
-- **[EDGE_CASE_VISUAL_FLOWS.md](docs/EDGE_CASE_VISUAL_FLOWS.md)** - Diagram visual flows
-- **[EDGE_CASES_ANALYSIS.md](docs/EDGE_CASES_ANALYSIS.md)** - Analisis mendalam
-
-#### 4️⃣ **Panduan & FAQ**
-- **[FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md)** - 15 pertanyaan umum & jawaban
-- **[TESTING_DYNAMIC_COLUMNS.md](docs/TESTING_DYNAMIC_COLUMNS.md)** - Testing guide
-- **[DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)** - Index semua dokumentasi
 
 ---
 

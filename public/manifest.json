@@ -1,50 +1,64 @@
 {
-  "short_name": "RAPOR",
-  "name": "RAPOR - Laporan Hasil Belajar",
-  "description": "Aplikasi manajemen dan pembuatan laporan hasil belajar siswa dengan dukungan offline",
+  "name": "Aplikasi Rapor Kurikulum Merdeka",
+  "short_name": "Rapor Kurmer",
+  "description": "Sistem profesional untuk manajemen dan pembuatan laporan hasil belajar siswa (Rapor) Kurikulum Merdeka. Mendukung penarikan data dari Google Sheets secara otomatis dan upload file Excel offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logo512.png",
-      "type": "image/png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
+      "src": "icons/icon-maskable-512.png",
       "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "scope": "/",
-  "theme_color": "#0066cc",
-  "background_color": "#ffffff",
-  "orientation": "portrait-primary",
-  "categories": ["education", "productivity"],
-  "screenshots": [
+  "screenshots": [],
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "shortcuts": [
     {
-      "src": "favicon.ico",
-      "type": "image/x-icon",
-      "sizes": "192x192"
+      "name": "Tarik Data Cloud",
+      "short_name": "Spreadsheet",
+      "description": "Tarik data terbaru dari Google Sheets",
+      "url": "/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Upload Excel",
+      "short_name": "Upload",
+      "description": "Upload file excel secara manual",
+      "url": "/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

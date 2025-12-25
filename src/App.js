@@ -13,6 +13,7 @@ const RaporApp = () => {
   const [spreadsheetId] = useState('1vNFphN9h2GPdVykILiHSLblilN8j7txN');
   const [selectedClassSheet, setSelectedClassSheet] = useState('10A');
   const [isFetching, setIsFetching] = useState(false);
+  const [competencyFontSize, setCompetencyFontSize] = useState(10);
 
   // Daftar mata pelajaran wajib
   const requiredSubjects = [
@@ -597,13 +598,13 @@ const RaporApp = () => {
                       <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
                         {subject.data?.avg || '-'}
                       </td>
-                      <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                      <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: tp2 ? '0.1rem' : '0.1rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
                         {tp1}
                       </td>
                     </tr>
                     {tp2 && (
                       <tr>
-                        <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                        <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                           {tp2}
                         </td>
                       </tr>
@@ -650,13 +651,13 @@ const RaporApp = () => {
                           <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
                             {subject.data?.avg || '-'}
                           </td>
-                          <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                          <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: tp2 ? '0.1rem' : '0.1rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
                             {tp1}
                           </td>
                         </tr>
                         {tp2 && (
                           <tr>
-                            <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                            <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                               {tp2}
                             </td>
                           </tr>
@@ -704,13 +705,13 @@ const RaporApp = () => {
                           <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
                             {subject.data?.avg || '-'}
                           </td>
-                          <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                          <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: tp2 ? '0.1rem' : '0.1rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
                             {tp1}
                           </td>
                         </tr>
                         {tp2 && (
                           <tr>
-                            <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                            <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                               {tp2}
                             </td>
                           </tr>
@@ -936,132 +937,146 @@ const RaporApp = () => {
             {isMobile ? (
               // Mobile: Two-column layout (Upload & Student Selection left, View/Print controls right)
               <>
-                {/* Sidebar Menu Sections - 2x2 Grid */}
+                {/* Sidebar Menu Sections - 2 Columns */}
                 <div className="grid grid-cols-2 gap-2">
-                  {/* Section 1: Upload */}
-                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                      <Upload size={16} /> 1. Upload Excel
-                    </h2>
-                    <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-medium w-full justify-center">
-                      <Upload size={16} />
-                      Pilih File
-                      <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
-                    </label>
-                    {students.length > 0 && <p className="mt-2 text-green-600 text-[10px] font-medium italic">✓ {students.length} siswa aktif</p>}
-                  </div>
-
-                  {/* Section 2: Spreadsheet (CLOUD) */}
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                    <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                      <FileSpreadsheet size={16} /> 2. Spreadsheet
-                    </h2>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          handleFetchSpreadsheet();
-                          if (isMobile) setMobileMenuOpen(false);
-                        }}
-                        disabled={isFetching}
-                        className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-xs font-medium`}
-                      >
-                        {isFetching ? 'Loading...' : 'Tarik Data Terbaru'}
-                      </button>
-                      <select
-                        value={selectedClassSheet}
-                        onChange={(e) => setSelectedClassSheet(e.target.value)}
-                        className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        {['10A', '10B', '11A', '11B', '12A', '12B'].map(cls => (
-                          <option key={cls} value={cls}>Kelas {cls}</option>
-                        ))}
-                      </select>
-                      <a
-                        href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-center text-blue-600 hover:underline text-[10px] font-medium"
-                      >
-                        Buka Spreadsheet ↗
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Section 3: Layout Selection */}
-                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                      <Menu size={16} /> 3. Pilih Layout
-                    </h2>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setLayoutType('kelas10')}
-                        className={`flex-1 py-2 rounded text-xs font-medium transition ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                      >
-                        Kelas 10
-                      </button>
-                      <button
-                        onClick={() => setLayoutType('kelas1112')}
-                        className={`flex-1 py-2 rounded text-xs font-medium transition ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                      >
-                        Kelas 11/12
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Section 4: Student Selection & Print */}
-                  {students.length > 0 && (
+                  {/* Column 1: Section 1, 2, 3 */}
+                  <div className="flex flex-col gap-2">
+                    {/* Section 1: Upload */}
                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                        <Menu size={16} /> 4. Pilih Siswa
+                        <Upload size={16} /> 1. Upload Excel
                       </h2>
-                      <div className="flex flex-col gap-3">
-                        <select
-                          className="w-full border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-                          onChange={(e) => {
-                            setSelectedStudent(students[e.target.value]);
-                            setViewMode('single');
-                            if (isMobile) setMobileMenuOpen(false);
-                          }}
+                      <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-medium w-full justify-center">
+                        <Upload size={16} />
+                        Pilih File
+                        <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
+                      </label>
+                      {students.length > 0 && <p className="mt-2 text-green-600 text-[10px] font-medium italic">✓ {students.length} siswa aktif</p>}
+                    </div>
+
+                    {/* Section 2: Spreadsheet (CLOUD) */}
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                        <FileSpreadsheet size={16} /> 2. Spreadsheet
+                      </h2>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={handleFetchSpreadsheet}
+                          disabled={isFetching}
+                          className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-xs font-medium`}
                         >
-                          {students.map((student, index) => (
-                            <option key={index} value={index}>{student.Nama} ({student.NIS})</option>
+                          {isFetching ? 'Loading...' : 'Tarik Data Terbaru'}
+                        </button>
+                        <select
+                          value={selectedClassSheet}
+                          onChange={(e) => setSelectedClassSheet(e.target.value)}
+                          className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          {['10A', '10B', '11A', '11B', '12A', '12B'].map(cls => (
+                            <option key={cls} value={cls}>Kelas {cls}</option>
                           ))}
                         </select>
-
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => {
-                              setViewMode('single');
-                              if (isMobile) setMobileMenuOpen(false);
-                            }}
-                            className={`flex-1 py-2 rounded text-[10px] font-bold transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                          >
-                            1 Siswa
-                          </button>
-                          <button
-                            onClick={() => {
-                              setViewMode('all');
-                              if (isMobile) setMobileMenuOpen(false);
-                            }}
-                            className={`flex-1 py-2 rounded text-[10px] font-bold transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                          >
-                            Semua
-                          </button>
-                          <button
-                            onClick={handlePrint}
-                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center"
-                          >
-                            <Printer size={16} />
-                          </button>
-                        </div>
+                        <a
+                          href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-center text-blue-600 hover:underline text-[10px] font-medium"
+                        >
+                          Buka Spreadsheet ↗
+                        </a>
                       </div>
                     </div>
-                  )}
+
+                    {/* Section 3: Layout Selection */}
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                      <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                        <Menu size={16} /> 3. Pilih Layout
+                      </h2>
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => setLayoutType('kelas10')}
+                          className={`w-full py-2 rounded text-xs font-medium transition ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                        >
+                          Kelas 10
+                        </button>
+                        <button
+                          onClick={() => setLayoutType('kelas1112')}
+                          className={`w-full py-2 rounded text-xs font-medium transition ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                        >
+                          Kelas 11/12
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Section 4, 5 */}
+                  <div className="flex flex-col gap-2">
+                    {students.length > 0 && (
+                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex-1">
+                        <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                          <Menu size={16} /> 4. Pilih Siswa
+                        </h2>
+                        <div className="flex flex-col gap-2">
+                          <select
+                            className="w-full border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                            onChange={(e) => {
+                              setSelectedStudent(students[e.target.value]);
+                              setViewMode('single');
+                            }}
+                          >
+                            {students.map((student, index) => (
+                              <option key={index} value={index}>{student.Nama} ({student.NIS})</option>
+                            ))}
+                          </select>
+
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => setViewMode('single')}
+                              className={`w-full py-2 rounded text-xs font-bold transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                            >
+                              Lihat 1 Siswa
+                            </button>
+                            <button
+                              onClick={() => setViewMode('all')}
+                              className={`w-full py-2 rounded text-xs font-bold transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                            >
+                              Lihat Semua
+                            </button>
+                            <button
+                              onClick={handlePrint}
+                              className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-2 text-xs font-bold"
+                            >
+                              <Printer size={16} />
+                              Print
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section 5: Font Size Control (Mobile) */}
+                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                      <h2 className="font-bold mb-2 flex items-center gap-2 text-orange-700 text-xs">
+                        <Menu size={16} /> 5. Ukuran Font
+                      </h2>
+                      <div className="flex items-center justify-between gap-1 bg-white p-1 rounded border border-orange-200">
+                        <button
+                          onClick={() => setCompetencyFontSize(Math.max(8, competencyFontSize - 1))}
+                          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold"
+                        > - </button>
+                        <span className="text-xs font-bold">{competencyFontSize}px</span>
+                        <button
+                          onClick={() => setCompetencyFontSize(Math.min(14, competencyFontSize + 1))}
+                          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold"
+                        > + </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (
-              // Desktop: Four-column layout (Proportion 20% - 20% - 20% - 40%)
-              <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 2fr' }}>
+              // Desktop: Five-column layout
+              <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1.1fr)' }}>
                 {/* Column 1: Upload Section */}
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                   <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
@@ -1147,10 +1162,54 @@ const RaporApp = () => {
                       ))}
                     </select>
                     <div className="flex gap-1">
-                      <button onClick={() => setViewMode('single')} className={`flex-1 py-1.5 rounded text-[10px] font-bold transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>1 Siswa</button>
-                      <button onClick={() => setViewMode('all')} className={`flex-1 py-1.5 rounded text-[10px] font-bold transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>Semua</button>
-                      <button onClick={handlePrint} className="px-2 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center"><Printer size={14} /></button>
+                      <button
+                        onClick={() => setViewMode('single')}
+                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Tampilkan 1 Siswa
+                      </button>
+                      <button
+                        onClick={() => setViewMode('all')}
+                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      >
+                        Tampilkan Semua
+                      </button>
+                      <button
+                        onClick={handlePrint}
+                        className="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-1 text-[11px] font-bold"
+                      >
+                        <Printer size={16} />
+                        Cetak
+                      </button>
                     </div>
+                  </div>
+                </div>
+
+                {/* Column 5: Font Size Selection */}
+                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                  <h2 className="font-bold mb-3 flex items-center gap-2 text-orange-700 text-sm">
+                    <Menu size={18} /> 5. Ukuran Font
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between bg-white px-2 py-1.5 rounded border border-orange-200">
+                      <button
+                        onClick={() => setCompetencyFontSize(Math.max(8, competencyFontSize - 1))}
+                        className="w-10 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold text-gray-800 transition"
+                      >
+                        -
+                      </button>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-gray-500 font-medium">Font TP</span>
+                        <span className="text-sm font-bold text-orange-700">{competencyFontSize}px</span>
+                      </div>
+                      <button
+                        onClick={() => setCompetencyFontSize(Math.min(14, competencyFontSize + 1))}
+                        className="w-10 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold text-gray-800 transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-orange-600 text-center italic">Atur besar teks capaian kompetensi</p>
                   </div>
                 </div>
               </div>
