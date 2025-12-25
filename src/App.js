@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, X, Download } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import html2pdf from 'html2pdf.js';
 
 const RaporApp = () => {
   const [students, setStudents] = useState([]);
@@ -11,6 +10,9 @@ const RaporApp = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [layoutType, setLayoutType] = useState('kelas10'); // 'kelas10' or 'kelas1112'
+  const [spreadsheetId] = useState('1vNFphN9h2GPdVykILiHSLblilN8j7txN');
+  const [selectedClassSheet, setSelectedClassSheet] = useState('10A');
+  const [isFetching, setIsFetching] = useState(false);
 
   // Daftar mata pelajaran wajib
   const requiredSubjects = [
@@ -138,7 +140,11 @@ const RaporApp = () => {
     });
 
     // Check for unrecognized subjects (exclude system columns)
-    const systemColumns = ['no', 'nis', 'nama', 'rata-rata', 'keterangan', 'sakit', 'izin', 'tanpa', 'kepala', 'wali', 'kelas', 'sekolah', 'fase', 'semester', 'tahun', 'tempat', 'tanggal', 'pramuka', 'pmr'];
+    const systemColumns = [
+      'no', 'nis', 'nama', 'rata-rata', 'keterangan', 'sakit', 'izin', 'tanpa',
+      'kepala', 'wali', 'kelas', 'sekolah', 'fase', 'semester', 'tahun', 'tempat', 'tanggal', 'pramuka', 'pmr',
+      'deskripsi kokurikuler', 'ekstrakurikuler', 'ketidakhadiran', 'catatan wali kelas'
+    ];
 
     trimmedHeader.forEach((header) => {
       if (header &&
@@ -251,190 +257,210 @@ const RaporApp = () => {
   };
 
 
+  const processWorkbookData = (workbook, customClassSheet = null) => {
+    const sheetNames = workbook.SheetNames;
+    console.log('Available sheets:', sheetNames);
+
+    // Tentukan sheet data nilai dan sheet kurikulum
+    // Jika customClassSheet ada, cari sheet dengan nama tersebut. Jika tidak ada, pakai sheet pertama.
+    let nilaiSheetName = sheetNames[0];
+    if (customClassSheet && sheetNames.includes(customClassSheet)) {
+      nilaiSheetName = customClassSheet;
+    }
+
+    // Cari sheet kurikulum (biasanya sheet ke-7 atau bernama 'Kurikulum')
+    let kurikulumSheetName = sheetNames[1]; // Fallback ke sheet ke-2
+    const kurikulumIndex = sheetNames.findIndex(name => name.toLowerCase().includes('kurikulum'));
+    if (kurikulumIndex !== -1) {
+      kurikulumSheetName = sheetNames[kurikulumIndex];
+    } else if (sheetNames.length >= 7) {
+      kurikulumSheetName = sheetNames[6]; // Sheet ke-7
+    }
+
+    // School info dari nilaiSheet (baris 1-6)
+    const schoolInfo = {};
+    const nilaiSheet = workbook.Sheets[nilaiSheetName];
+    const nilaiData = XLSX.utils.sheet_to_json(nilaiSheet, { header: 1 });
+
+    // Parse info sekolah dari baris 1-6
+    [0, 1, 2, 3, 4, 5].forEach(idx => {
+      if (nilaiData[idx] && nilaiData[idx][0] && nilaiData[idx][1]) {
+        const key = String(nilaiData[idx][0]).toLowerCase().trim();
+        if (key === 'sekolah') schoolInfo.sekolah = nilaiData[idx][1];
+        else if (key === 'alamat') schoolInfo.alamat = nilaiData[idx][1];
+        else if (key === 'kelas') schoolInfo.kelas = nilaiData[idx][1];
+        else if (key === 'fase') schoolInfo.fase = nilaiData[idx][1];
+        else if (key === 'semester') schoolInfo.semester = nilaiData[idx][1];
+        else if (key === 'tahun ajaran') schoolInfo.tahunAjaran = nilaiData[idx][1];
+      }
+    });
+
+    // Find subject columns dynamically from header row (row 8, index 7)
+    const headerRow = nilaiData[7] || [];
+    const subjectColumns = findSubjectColumns(headerRow);
+    const headerValidation = validateHeaderRow(headerRow);
+
+    if (headerValidation.recognizedSubjects.length === 0) {
+      throw new Error('Tidak ada mata pelajaran yang dikenali di sheet ' + nilaiSheetName);
+    }
+
+    // Parse data siswa dari baris 10+ (index 9+)
+    const nilaiRows = nilaiData.slice(9);
+    const studentMap = {};
+
+    nilaiRows.forEach((row) => {
+      if (!row[2] || row[2] === 'RATA-RATA KELAS' || String(row[2]).trim() === '') return;
+
+      const nama = row[2];
+      if (!studentMap[nama]) {
+        studentMap[nama] = {
+          No: row[0],
+          NIS: row[1],
+          Nama: nama,
+          subjects: {},
+          identitas: { ...schoolInfo },
+          kokurikuler: '',
+          ekstrakurikuler: [],
+          ketidakhadiran: {}
+        };
+      }
+
+      Object.entries(subjectColumns).forEach(([subjectName, indices]) => {
+        const ketVal = row[indices.ketIndex];
+        const pengVal = row[indices.pengIndex];
+        studentMap[nama].subjects[subjectName] = {
+          KET: ketVal,
+          PENG: pengVal,
+          avg: calculateAverage(ketVal, pengVal)
+        };
+      });
+    });
+
+    // Parse Kurikulum
+    let parsedCurriculum = {};
+    const kurikulumSheet = workbook.Sheets[kurikulumSheetName];
+    if (kurikulumSheet) {
+      const kurikulumData = XLSX.utils.sheet_to_json(kurikulumSheet, { header: 1 });
+      parsedCurriculum = parseKurikulum(kurikulumData);
+
+      Object.keys(studentMap).forEach((namaStudent) => {
+        const student = studentMap[namaStudent];
+        Object.keys(student.subjects).forEach((mapelName) => {
+          const subjectData = student.subjects[mapelName];
+          const descriptions = generateDescriptions(
+            subjectData.KET,
+            subjectData.PENG,
+            mapelName,
+            schoolInfo.kelas,
+            parsedCurriculum
+          );
+          subjectData.TP1 = descriptions.row1;
+          subjectData.TP2 = descriptions.row2;
+        });
+      });
+    }
+
+    // Parse data pelengkap (Kolom AO-AU pada nilaiData)
+    [0, 1, 2, 3].forEach(idx => {
+      if (nilaiData[idx] && nilaiData[idx][40] && nilaiData[idx][41]) {
+        const key = String(nilaiData[idx][40]).toLowerCase().trim();
+        if (key === 'tempat') studentMap[Object.keys(studentMap)[0]].identitas.tempat = nilaiData[idx][41];
+        else if (key === 'tanggal') studentMap[Object.keys(studentMap)[0]].identitas.tanggal = nilaiData[idx][41];
+        else if (key === 'nama kepala') studentMap[Object.keys(studentMap)[0]].identitas.namaKepala = nilaiData[idx][41];
+        else if (key === 'nama wali kelas') studentMap[Object.keys(studentMap)[0]].identitas.namaWaliKelas = nilaiData[idx][41];
+      }
+    });
+
+    // Sebarkan info identitas tambahan ke semua siswa
+    const firstStudent = studentMap[Object.keys(studentMap)[0]];
+    if (firstStudent) {
+      const extraInfo = {
+        tempat: firstStudent.identitas.tempat,
+        tanggal: firstStudent.identitas.tanggal,
+        namaKepala: firstStudent.identitas.namaKepala,
+        namaWaliKelas: firstStudent.identitas.namaWaliKelas
+      };
+      Object.values(studentMap).forEach(s => {
+        s.identitas = { ...s.identitas, ...extraInfo };
+      });
+    }
+
+    const ekskul1Name = nilaiData[7]?.[42] || 'Pramuka';
+    const ekskul2Name = nilaiData[7]?.[43] || 'PMR';
+
+    nilaiRows.forEach((row) => {
+      if (!row[2] || row[2] === 'RATA-RATA KELAS' || String(row[2]).trim() === '') return;
+      const nama = row[2];
+      if (studentMap[nama]) {
+        studentMap[nama].kokurikuler = row[40] || '';
+        studentMap[nama].ekstrakurikuler = [
+          { nama: ekskul1Name, keterangan: row[41] || '' },
+          { nama: ekskul2Name, keterangan: row[42] || '' }
+        ];
+        studentMap[nama].ketidakhadiran = {
+          sakit: row[43] || 0,
+          izin: row[44] || 0,
+          tanpaKet: row[45] || 0
+        };
+        studentMap[nama].catatanWaliKelas = row[46] || '';
+      }
+    });
+
+    return {
+      processedStudents: Object.values(studentMap),
+      orderedSubjects: Object.keys(subjectColumns),
+      parsedCurriculum,
+      headerValidation
+    };
+  };
+
+  const handleFetchSpreadsheet = async () => {
+    setIsFetching(true);
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Gagal mendownload spreadsheet. Pastikan link disetel ke "Anyone with the link can view".');
+
+      const buffer = await response.arrayBuffer();
+      const workbook = XLSX.read(buffer);
+
+      const result = processWorkbookData(workbook, selectedClassSheet);
+
+      setSubjectOrder(result.orderedSubjects);
+      setStudents(result.processedStudents);
+      if (result.processedStudents.length > 0) {
+        setSelectedStudent(result.processedStudents[0]);
+      }
+
+      alert(`✅ Berhasil menarik data kelas ${selectedClassSheet}\n👥 ${result.processedStudents.length} siswa dimuat.`);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      alert('❌ Error: ' + error.message);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     try {
       const data = await file.arrayBuffer();
-      // Parse CSV with semicolon delimiter
       const workbook = XLSX.read(data, { delimiter: ';' });
 
-      const sheetNames = workbook.SheetNames;
-      console.log('Available sheets:', sheetNames);
+      const result = processWorkbookData(workbook);
 
-      // School info dari sheet pertama (baris 1-5)
-      const schoolInfo = {};
-      const nilaiSheet = workbook.Sheets[sheetNames[0]];
-      const nilaiData = XLSX.utils.sheet_to_json(nilaiSheet, { header: 1 });
-
-      // Parse info sekolah dari baris 1-6
-      [0, 1, 2, 3, 4, 5].forEach(idx => {
-        if (nilaiData[idx] && nilaiData[idx][0] && nilaiData[idx][1]) {
-          const key = nilaiData[idx][0].toLowerCase().trim();
-          if (key === 'sekolah') schoolInfo.sekolah = nilaiData[idx][1];
-          else if (key === 'alamat') schoolInfo.alamat = nilaiData[idx][1];
-          else if (key === 'kelas') schoolInfo.kelas = nilaiData[idx][1];
-          else if (key === 'fase') schoolInfo.fase = nilaiData[idx][1];
-          else if (key === 'semester') schoolInfo.semester = nilaiData[idx][1];
-          else if (key === 'tahun ajaran') schoolInfo.tahunAjaran = nilaiData[idx][1];
-        }
-      });
-
-      // Find subject columns dynamically from header row (row 8, index 7 - setelah alamat ditambah)
-      const headerRow = nilaiData[7] || [];
-      const subjectColumns = findSubjectColumns(headerRow);
-      const headerValidation = validateHeaderRow(headerRow);
-
-      console.log('Dynamic subject columns found:', subjectColumns);
-      console.log('Header validation:', headerValidation);
-
-      // Alert user if there are unrecognized subjects
-      if (headerValidation.unrecognizedSubjects.length > 0) {
-        console.warn('⚠️ Unrecognized subjects (akan diabaikan):', headerValidation.unrecognizedSubjects);
+      setSubjectOrder(result.orderedSubjects);
+      setStudents(result.processedStudents);
+      if (result.processedStudents.length > 0) {
+        setSelectedStudent(result.processedStudents[0]);
       }
 
-      if (headerValidation.recognizedSubjects.length === 0) {
-        alert('❌ Error: Tidak ada mata pelajaran yang dikenali di file!\n\nPastikan nama mata pelajaran di baris header sudah benar.');
-        return;
-      }
-
-      // Parse data siswa dari baris 10+ (index 9+)
-      const nilaiRows = nilaiData.slice(9);
-      const studentMap = {};
-
-      nilaiRows.forEach((row) => {
-        if (!row[2] || row[2] === 'RATA-RATA KELAS' || row[2].trim() === '') return;
-
-        const nama = row[2];
-        if (!studentMap[nama]) {
-          studentMap[nama] = {
-            No: row[0],
-            NIS: row[1],
-            Nama: nama,
-            subjects: {},
-            identitas: schoolInfo,
-            kokurikuler: '',
-            ekstrakurikuler: [],
-            ketidakhadiran: {}
-          };
-        }
-
-        // Process subjects using dynamically found columns
-        Object.entries(subjectColumns).forEach(([subjectName, indices]) => {
-          const ketVal = row[indices.ketIndex];
-          const pengVal = row[indices.pengIndex];
-
-          studentMap[nama].subjects[subjectName] = {
-            KET: ketVal,
-            PENG: pengVal,
-            avg: calculateAverage(ketVal, pengVal)
-          };
-        });
-      });
-
-      // Parse Sheet 2 - KURIKULUM (NEW: Changed from DESKRIPSI)
-      let parsedCurriculum = {};
-      if (sheetNames.length > 1) {
-        const kurikulumSheet = workbook.Sheets[sheetNames[1]];
-        const kurikulumData = XLSX.utils.sheet_to_json(kurikulumSheet, { header: 1 });
-
-        // Parse kurikulum structure
-        parsedCurriculum = parseKurikulum(kurikulumData);
-        console.log('Curriculum parsed:', parsedCurriculum);
-
-        // Auto-generate descriptions for each student and subject
-        Object.keys(studentMap).forEach((namaStudent) => {
-          const student = studentMap[namaStudent];
-          Object.keys(student.subjects).forEach((mapelName) => {
-            const subjectData = student.subjects[mapelName];
-            const descriptions = generateDescriptions(
-              subjectData.KET,
-              subjectData.PENG,
-              mapelName,
-              schoolInfo.kelas,
-              parsedCurriculum  // Pass curriculum data as parameter
-            );
-            subjectData.TP1 = descriptions.row1;
-            subjectData.TP2 = descriptions.row2;
-          });
-        });
-      }
-
-      // Parse Sheet 3 - PELENGKAP
-      if (sheetNames.length > 2) {
-        const pelengkapSheet = workbook.Sheets[sheetNames[2]];
-        const pelengkapData = XLSX.utils.sheet_to_json(pelengkapSheet, { header: 1 });
-
-        // Parse info tambahan dari baris 1-4
-        [0, 1, 2, 3].forEach(idx => {
-          if (pelengkapData[idx] && pelengkapData[idx][0] && pelengkapData[idx][1]) {
-            const key = pelengkapData[idx][0].toLowerCase().trim();
-            if (key === 'tempat') schoolInfo.tempat = pelengkapData[idx][1];
-            else if (key === 'tanggal') schoolInfo.tanggal = pelengkapData[idx][1];
-            else if (key === 'nama kepala') schoolInfo.namaKepala = pelengkapData[idx][1];
-            else if (key === 'nama wali kelas') schoolInfo.namaWaliKelas = pelengkapData[idx][1];
-          }
-        });
-
-        // Get ekstrakurikuler names from row 8 (index 7), columns E and F (index 4 and 5)
-        const ekskul1Name = pelengkapData[7]?.[4] || 'Pramuka';
-        const ekskul2Name = pelengkapData[7]?.[5] || 'PMR';
-
-        // Parse data siswa dari baris 9+ (index 8+)
-        const pelengkapRows = pelengkapData.slice(8);
-        pelengkapRows.forEach((row) => {
-          if (!row[2] || row[2] === 'RATA-RATA KELAS' || row[2].trim() === '') return;
-
-          const nama = row[2];
-          if (studentMap[nama]) {
-            studentMap[nama].kokurikuler = row[3] || '';
-            studentMap[nama].ekstrakurikuler = [
-              { nama: ekskul1Name, keterangan: row[4] || '' },
-              { nama: ekskul2Name, keterangan: row[5] || '' }
-            ];
-            studentMap[nama].ketidakhadiran = {
-              sakit: row[6] || 0,
-              izin: row[7] || 0,
-              tanpaKet: row[8] || 0
-            };
-            // Catatan Wali Kelas dari kolom J (index 9)
-            studentMap[nama].catatanWaliKelas = row[9] || '';
-          }
-        });
-      }
-
-      const processedStudents = Object.values(studentMap);
-
-      // Save subject order from the file
-      const orderedSubjects = Object.keys(subjectColumns);
-      setSubjectOrder(orderedSubjects);
-
-      setStudents(processedStudents);
-      if (processedStudents.length > 0) {
-        setSelectedStudent(processedStudents[0]);
-      }
-
-      // Build detailed success message
-      let successMessage = `✅ Berhasil memuat ${processedStudents.length} siswa dari ${sheetNames.length} sheet\n`;
-      successMessage += `📚 Mata pelajaran terdeteksi: ${orderedSubjects.length}`;
-
-      if (Object.keys(parsedCurriculum).length > 0) {
-        successMessage += `\n📖 Kurikulum dimuat: ${Object.keys(parsedCurriculum).length} mapel`;
-      }
-
-      if (headerValidation.unrecognizedSubjects.length > 0) {
-        successMessage += `\n\n⚠️ ${headerValidation.unrecognizedSubjects.length} mata pelajaran tidak dikenali (diabaikan):\n`;
-        successMessage += headerValidation.unrecognizedSubjects.slice(0, 5).join(', ');
-        if (headerValidation.unrecognizedSubjects.length > 5) {
-          successMessage += `, +${headerValidation.unrecognizedSubjects.length - 5} lainnya`;
-        }
-      }
-
-      alert(successMessage);
+      alert(`✅ Berhasil memuat ${result.processedStudents.length} siswa.`);
     } catch (error) {
       console.error('Error reading file:', error);
-      alert('❌ Gagal membaca file.\n\nError: ' + error.message);
+      alert('❌ Gagal membaca file: ' + error.message);
     }
   };
 
@@ -471,126 +497,26 @@ const RaporApp = () => {
     }, 100);
   };
 
-  const handleDownloadPDF = async () => {
-    // Ambil semua elemen halaman rapor yang saat ini ada di DOM
-    const raporPages = document.querySelectorAll('.rapor-page-1, .rapor-page-2');
+  const handleDownloadPDF = () => {
+    // Gunakan window.print() yang lebih reliable
+    // User akan diminta untuk memilih "Save as PDF" dari dialog print
 
-    if (raporPages.length === 0) {
+    if (students.length === 0) {
       alert('Tidak ada data rapor untuk diunduh. Harap upload file terlebih dahulu.');
       return;
     }
 
-    // Buat container sementara untuk menampung kloning
-    // Gunakan opacity 1 agar tertangkap kamera html2canvas, tapi z-index -9999 agar tersembunyi
-    const container = document.createElement('div');
-    container.style.width = '210mm';
-    container.style.position = 'fixed';
-    container.style.left = '0';
-    container.style.top = '0';
-    container.style.zIndex = '-9999';
-    container.style.opacity = '1';
-    container.style.backgroundColor = 'white';
-    document.body.appendChild(container);
+    // Tampilkan instruksi kepada user
+    const userConfirmed = window.confirm(
+      'Untuk mengunduh PDF:\n\n' +
+      '1. Klik OK untuk membuka dialog print\n' +
+      '2. Pilih "Save as PDF" atau "Microsoft Print to PDF" sebagai printer\n' +
+      '3. Klik Save/Print\n\n' +
+      'Catatan: Footer dengan informasi Kelas, Nama, dan Halaman akan otomatis ditambahkan.'
+    );
 
-    try {
-      // Loop untuk setiap halaman asli dan buat klov dengan footer
-      raporPages.forEach((page, idx) => {
-        // Wrapper per halaman A4
-        const pageWrapper = document.createElement('div');
-        pageWrapper.style.width = '210mm';
-        pageWrapper.style.height = '296.5mm'; // Presisi A4
-        pageWrapper.style.position = 'relative';
-        pageWrapper.style.backgroundColor = 'white';
-        pageWrapper.style.boxSizing = 'border-box';
-        pageWrapper.style.padding = '15mm 15mm 30mm 15mm';
-        pageWrapper.style.overflow = 'hidden';
-
-        // Klon isi halaman
-        const clone = page.cloneNode(true);
-        clone.style.margin = '0';
-        clone.style.boxShadow = 'none';
-        clone.style.width = '100%';
-        clone.style.height = '100%';
-
-        pageWrapper.appendChild(clone);
-
-        // Cari informasi siswa dari data untuk footer
-        const studentIdx = viewMode === 'single' ? students.indexOf(selectedStudent) : Math.floor(idx / 2);
-        const student = students[studentIdx];
-        const studentName = student?.Nama || '-';
-        const studentKelas = student?.identitas?.kelas || '-';
-        const pageNum = (idx % 2) + 1;
-
-        // Buat elemen Footer
-        const footer = document.createElement('div');
-        footer.style.position = 'absolute';
-        footer.style.bottom = '10mm';
-        footer.style.left = '15mm';
-        footer.style.right = '15mm';
-        footer.style.fontFamily = "'Courier New', Courier, monospace";
-        footer.style.fontStyle = 'italic';
-        footer.style.fontSize = '12px'; // Sedikit lebih besar agar makin jelas
-        footer.style.color = 'black';
-
-        // Garis horizontal footer
-        const hr = document.createElement('div');
-        hr.style.borderTop = '1px solid black';
-        hr.style.width = '100%';
-        hr.style.marginBottom = '6px';
-
-        const footerContent = document.createElement('div');
-        footerContent.style.display = 'flex';
-        footerContent.style.justifyContent = 'space-between';
-        footerContent.innerHTML = `
-          <span>${studentKelas} | ${studentName}</span>
-          <span>Halaman: ${pageNum}</span>
-        `;
-
-        footer.appendChild(hr);
-        footer.appendChild(footerContent);
-        pageWrapper.appendChild(footer);
-
-        // Tambahkan ke container
-        container.appendChild(pageWrapper);
-
-        // Tambahkan page break library
-        if (idx < raporPages.length - 1) {
-          const pb = document.createElement('div');
-          pb.className = 'html2pdf__page-break';
-          container.appendChild(pb);
-        }
-      });
-
-      // Tunggu render DOM selesai
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const opt = {
-        margin: 0,
-        filename: viewMode === 'single'
-          ? `Rapor_${selectedStudent?.Nama?.replace(/\s+/g, '_')}.pdf`
-          : 'Rapor_Semua_Siswa.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-          scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      // Simpan PDF
-      await html2pdf().set(opt).from(container).save();
-
-    } catch (err) {
-      console.error('PDF Generation Error:', err);
-      alert('Gagal membuat PDF. Silakan gunakan fungsi Print browser sebagai alternatif.');
-    } finally {
-      // Hapus container sementara
-      if (document.body.contains(container)) {
-        document.body.removeChild(container);
-      }
+    if (userConfirmed) {
+      window.print();
     }
   };
 
@@ -701,13 +627,13 @@ const RaporApp = () => {
                       <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
                         {subject.data?.avg || '-'}
                       </td>
-                      <td className="border-t border-r border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                      <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
                         {tp1}
                       </td>
                     </tr>
                     {tp2 && (
                       <tr>
-                        <td className="border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                        <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
                           {tp2}
                         </td>
                       </tr>
@@ -735,11 +661,11 @@ const RaporApp = () => {
                   <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
                   <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
                 </tr>
+              </thead>
+              <tbody>
                 <tr className="bg-gray-300">
                   <th colSpan="4" className="border border-black px-2 py-2 text-left font-bold">A. Kelompok Mata Pelajaran Wajib</th>
                 </tr>
-              </thead>
-              <tbody>
                 {displaySubjects
                   .filter(subject => requiredSubjects.includes(subject.name))
                   .map((subject, idx) => {
@@ -754,13 +680,13 @@ const RaporApp = () => {
                           <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
                             {subject.data?.avg || '-'}
                           </td>
-                          <td className="border-t border-r border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                          <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
                             {tp1}
                           </td>
                         </tr>
                         {tp2 && (
                           <tr>
-                            <td className="border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                            <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
                               {tp2}
                             </td>
                           </tr>
@@ -789,11 +715,11 @@ const RaporApp = () => {
                   <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
                   <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
                 </tr>
+              </thead>
+              <tbody>
                 <tr className="bg-gray-300">
                   <th colSpan="4" className="border border-black px-2 py-2 text-left font-bold">B. Kelompok Mata Pelajaran Pilihan</th>
                 </tr>
-              </thead>
-              <tbody>
                 {displaySubjects
                   .filter(subject => electiveSubjects.includes(subject.name))
                   .map((subject, idx) => {
@@ -808,13 +734,13 @@ const RaporApp = () => {
                           <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
                             {subject.data?.avg || '-'}
                           </td>
-                          <td className="border-t border-r border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
+                          <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: tp2 ? '0.2rem' : '0.2rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
                             {tp1}
                           </td>
                         </tr>
                         {tp2 && (
                           <tr>
-                            <td className="border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
+                            <td className="tp2-cell border-r border-b border-l border-black px-1" style={{ fontSize: isMobile ? '11px' : '12px', lineHeight: '1.3', paddingTop: '0.2rem', paddingBottom: '0.2rem' }}>
                               {tp2}
                             </td>
                           </tr>
@@ -842,7 +768,7 @@ const RaporApp = () => {
     return (
       <div className="bg-white rapor-page-2" style={pageStyle}>
         {/* Kokurikuler */}
-        <div className="mb-3 mt-6">
+        <div className="mb-3 mt-3">
           <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold text-xs">Kokurikuler</div>
           <div className="border border-black px-2 py-2 min-h-12 text-xs">
             {student?.kokurikuler || 'Ananda sudah baik dalam kreativitas yang terlihat dari kemampuan menemukan dan mengembangkan alternatif solusi yang efektif pada tema konservasi energi. Ananda masih perlu berlatih dalam mengomunikasikan gagasan.'}
@@ -976,6 +902,7 @@ const RaporApp = () => {
           body { margin: 0; }
           .print\\:hidden { display: none !important; }
           .page-break { page-break-after: always; }
+          
           /* Table header repeat on every page */
           table thead { display: table-header-group; }
           /* Allow table rows to break across pages */
@@ -987,13 +914,9 @@ const RaporApp = () => {
             margin: 0;
             padding: inherit;
           }
-          /* Remove border between TP rows in same subject - only for Nilai table */
-          .nilai-table tbody tr:nth-child(odd) td:last-child {
-            border-bottom: none !important;
-          }
-          .nilai-table tbody tr:nth-child(even) td:last-child {
-            border-top: none !important;
-          }
+          /* Hilangkan garis antara baris TP1 dan TP2 dalam satu mapel */
+          .tp1-cell { border-bottom: none !important; }
+          .tp2-cell { border-top: none !important; }
           /* Container untuk RaporPage1 bisa melanjut ke page 2 */
           .rapor-page-1 { 
             page-break-after: auto; 
@@ -1043,61 +966,87 @@ const RaporApp = () => {
             {isMobile ? (
               // Mobile: Two-column layout (Upload & Student Selection left, View/Print controls right)
               <>
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Left: Upload Section & Student Selection */}
-                  <div className="border-r border-gray-200 pr-3 space-y-3">
-                    {/* Upload Section */}
-                    <div>
-                      <h2 className="font-semibold mb-2 flex items-center gap-2 text-xs">
-                        <FileSpreadsheet size={14} /> Upload File Excel
-                      </h2>
-                      <label className="inline-flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-base w-full justify-center">
-                        <Upload size={20} />
-                        Pilih File
-                        <input
-                          type="file"
-                          accept=".xlsx,.xls"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-                      {students.length > 0 && (
-                        <p className="mt-2 text-gray-600 text-xs">
-                          ✓ {students.length} siswa berhasil dimuat
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Layout Selection Buttons */}
-                    {students.length > 0 && (
-                      <div className="pt-2 border-t border-gray-200">
-                        <p className="font-semibold mb-2 text-xs">Layout:</p>
-                        <div className="flex flex-col gap-1">
-                          <button
-                            onClick={() => setLayoutType('kelas10')}
-                            className={`px-2 py-1 rounded text-xs font-medium transition w-full ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                          >
-                            Kelas 10
-                          </button>
-                          <button
-                            onClick={() => setLayoutType('kelas1112')}
-                            className={`px-2 py-1 rounded text-xs font-medium transition w-full ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                          >
-                            Kelas 11/12
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                {/* Sidebar Menu Sections - 2x2 Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Section 1: Upload */}
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                      <Upload size={16} /> 1. Upload Excel
+                    </h2>
+                    <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-medium w-full justify-center">
+                      <Upload size={16} />
+                      Pilih File
+                      <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
+                    </label>
+                    {students.length > 0 && <p className="mt-2 text-green-600 text-[10px] font-medium italic">✓ {students.length} siswa aktif</p>}
                   </div>
 
-                  {/* Right: Student Selection & View Mode & Print Buttons */}
-                  {students.length > 0 && (
+                  {/* Section 2: Spreadsheet (CLOUD) */}
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                      <FileSpreadsheet size={16} /> 2. Spreadsheet
+                    </h2>
                     <div className="flex flex-col gap-2">
-                      {/* Student Selection */}
-                      <div>
-                        <label className="block font-semibold mb-1 text-xs">Pilih Siswa:</label>
+                      <button
+                        onClick={() => {
+                          handleFetchSpreadsheet();
+                          if (isMobile) setMobileMenuOpen(false);
+                        }}
+                        disabled={isFetching}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-xs font-medium`}
+                      >
+                        {isFetching ? 'Loading...' : 'Tarik Data Terbaru'}
+                      </button>
+                      <select
+                        value={selectedClassSheet}
+                        onChange={(e) => setSelectedClassSheet(e.target.value)}
+                        className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        {['10A', '10B', '11A', '11B', '12A', '12B'].map(cls => (
+                          <option key={cls} value={cls}>Kelas {cls}</option>
+                        ))}
+                      </select>
+                      <a
+                        href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-center text-blue-600 hover:underline text-[10px] font-medium"
+                      >
+                        Buka Spreadsheet ↗
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Layout Selection */}
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                      <Menu size={16} /> 3. Pilih Layout
+                    </h2>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setLayoutType('kelas10')}
+                        className={`flex-1 py-2 rounded text-xs font-medium transition ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                      >
+                        Kelas 10
+                      </button>
+                      <button
+                        onClick={() => setLayoutType('kelas1112')}
+                        className={`flex-1 py-2 rounded text-xs font-medium transition ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                      >
+                        Kelas 11/12
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Student Selection & Print */}
+                  {students.length > 0 && (
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                      <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
+                        <Menu size={16} /> 4. Pilih Siswa
+                      </h2>
+                      <div className="flex flex-col gap-3">
                         <select
-                          className="w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                          className="w-full border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                           onChange={(e) => {
                             setSelectedStudent(students[e.target.value]);
                             setViewMode('single');
@@ -1105,150 +1054,135 @@ const RaporApp = () => {
                           }}
                         >
                           {students.map((student, index) => (
-                            <option key={index} value={index}>
-                              {student.Nama} ({student.NIS})
-                            </option>
+                            <option key={index} value={index}>{student.Nama} ({student.NIS})</option>
                           ))}
                         </select>
-                      </div>
 
-                      {/* View Mode & Print Buttons */}
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => {
-                            setViewMode('single');
-                            if (isMobile) setMobileMenuOpen(false);
-                          }}
-                          className={`flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                          1 Siswa
-                        </button>
-                        <button
-                          onClick={() => {
-                            setViewMode('all');
-                            if (isMobile) setMobileMenuOpen(false);
-                          }}
-                          className={`flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                          Semua
-                        </button>
-                        <button
-                          onClick={handlePrint}
-                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs font-medium"
-                        >
-                          <Printer size={14} />
-                          Print
-                        </button>
-                        <button
-                          onClick={handleDownloadPDF}
-                          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-xs font-medium"
-                        >
-                          <Download size={14} />
-                          PDF
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => {
+                              setViewMode('single');
+                              if (isMobile) setMobileMenuOpen(false);
+                            }}
+                            className={`flex-1 py-2 rounded text-[10px] font-bold transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                          >
+                            1 Siswa
+                          </button>
+                          <button
+                            onClick={() => {
+                              setViewMode('all');
+                              if (isMobile) setMobileMenuOpen(false);
+                            }}
+                            className={`flex-1 py-2 rounded text-[10px] font-bold transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                          >
+                            Semua
+                          </button>
+                          <button
+                            onClick={handlePrint}
+                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center"
+                          >
+                            <Printer size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               </>
             ) : (
-              // Desktop: Three-column layout (Upload 15%, Layout 15%, Student 70%)
-              <div className="gap-6" style={{ display: 'grid', gridTemplateColumns: '3fr 3fr 14fr' }}>
+              // Desktop: Four-column layout (Proportion 20% - 20% - 20% - 40%)
+              <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 2fr' }}>
                 {/* Column 1: Upload Section */}
-                <div>
-                  <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-                    <FileSpreadsheet size={20} /> Upload File Excel
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
+                    <Upload size={18} /> 1. Upload Excel
                   </h2>
-                  <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-sm font-medium w-full justify-center">
-                    <Upload size={20} />
-                    Pilih File Excel
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
+                  <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-medium w-full justify-center">
+                    <Upload size={16} />
+                    Pilih File
+                    <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                   </label>
-                  {students.length > 0 && (
-                    <p className="mt-3 text-gray-600 text-sm">
-                      ✓ {students.length} siswa berhasil dimuat
-                    </p>
-                  )}
+                  {students.length > 0 && <p className="mt-2 text-green-600 text-[10px] font-medium italic">✓ {students.length} siswa aktif</p>}
                 </div>
 
-                {/* Column 2: Layout Selection */}
-                {students.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2 text-sm">Pilih Layout:</h3>
-                    <div className="flex flex-col gap-1">
-                      <button
-                        onClick={() => setLayoutType('kelas10')}
-                        className={`px-4 py-2 rounded text-sm font-medium transition w-full ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Layout Kelas 10
-                      </button>
-                      <button
-                        onClick={() => setLayoutType('kelas1112')}
-                        className={`px-4 py-2 rounded text-sm font-medium transition w-full ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Layout Kelas 11/12
-                      </button>
-                    </div>
+                {/* Column 2: Spreadsheet Section (CLOUD) */}
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
+                    <FileSpreadsheet size={18} /> 2. Spreadsheet
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={handleFetchSpreadsheet}
+                      disabled={isFetching}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-xs font-medium`}
+                    >
+                      {isFetching ? 'Loading...' : 'Tarik Data Terbaru'}
+                    </button>
+                    <select
+                      value={selectedClassSheet}
+                      onChange={(e) => setSelectedClassSheet(e.target.value)}
+                      className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      {['10A', '10B', '11A', '11B', '12A', '12B'].map(cls => (
+                        <option key={cls} value={cls}>Kelas {cls}</option>
+                      ))}
+                    </select>
+                    <a
+                      href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-center text-blue-600 hover:underline text-[10px] font-medium"
+                    >
+                      Buka Spreadsheet ↗
+                    </a>
                   </div>
-                )}
+                </div>
 
-                {/* Column 3: Student Selection Controls */}
-                {students.length > 0 && (
-                  <div className="flex flex-col">
-                    {/* Student Selection - aligned with Layout Kelas 10 */}
-                    <div className="mb-1">
-                      <label className="block font-semibold mb-2 text-sm">Pilih Siswa:</label>
-                      <select
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        onChange={(e) => {
-                          setSelectedStudent(students[e.target.value]);
-                          setViewMode('single');
-                        }}
-                      >
-                        {students.map((student, index) => (
-                          <option key={index} value={index}>
-                            {student.Nama} (NIS: {student.NIS})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                {/* Column 3: Layout Selection */}
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
+                    <Menu size={18} /> 3. Pilih Layout
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => setLayoutType('kelas10')}
+                      className={`px-3 py-2 rounded text-xs font-medium transition w-full ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                    >
+                      Kelas 10
+                    </button>
+                    <button
+                      onClick={() => setLayoutType('kelas1112')}
+                      className={`px-3 py-2 rounded text-xs font-medium transition w-full ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                    >
+                      Kelas 11/12
+                    </button>
+                  </div>
+                </div>
 
-                    {/* View Mode & Print Buttons Row - aligned with Layout Kelas 11/12 */}
+                {/* Column 4: Student Selection */}
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
+                    <Menu size={18} /> 4. Pilih Siswa
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    <select
+                      className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onChange={(e) => {
+                        setSelectedStudent(students[e.target.value]);
+                        setViewMode('single');
+                      }}
+                    >
+                      {students.map((student, index) => (
+                        <option key={index} value={index}>{student.Nama} ({student.NIS})</option>
+                      ))}
+                    </select>
                     <div className="flex gap-1">
-                      <button
-                        onClick={() => setViewMode('single')}
-                        className={`flex-1 px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Lihat 1 Siswa
-                      </button>
-                      <button
-                        onClick={() => setViewMode('all')}
-                        className={`flex-1 px-4 py-2 rounded text-sm font-medium transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Lihat Semua
-                      </button>
-                      <button
-                        onClick={handlePrint}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
-                      >
-                        <Printer size={18} />
-                        {viewMode === 'single' ? 'Print Siswa Ini' : 'Print Semua Siswa'}
-                      </button>
-                      <button
-                        onClick={handleDownloadPDF}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm font-medium"
-                      >
-                        <Download size={18} />
-                        Unduh PDF
-                      </button>
+                      <button onClick={() => setViewMode('single')} className={`flex-1 py-1.5 rounded text-[10px] font-bold transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>1 Siswa</button>
+                      <button onClick={() => setViewMode('all')} className={`flex-1 py-1.5 rounded text-[10px] font-bold transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>Semua</button>
+                      <button onClick={handlePrint} className="px-2 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center"><Printer size={14} /></button>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -1302,7 +1236,7 @@ const RaporApp = () => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 
