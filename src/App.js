@@ -490,36 +490,6 @@ const RaporApp = () => {
     window.print();
   };
 
-  const handleGenerateAll = () => {
-    setViewMode('all');
-    setTimeout(() => {
-      window.print();
-    }, 100);
-  };
-
-  const handleDownloadPDF = () => {
-    // Gunakan window.print() yang lebih reliable
-    // User akan diminta untuk memilih "Save as PDF" dari dialog print
-
-    if (students.length === 0) {
-      alert('Tidak ada data rapor untuk diunduh. Harap upload file terlebih dahulu.');
-      return;
-    }
-
-    // Tampilkan instruksi kepada user
-    const userConfirmed = window.confirm(
-      'Untuk mengunduh PDF:\n\n' +
-      '1. Klik OK untuk membuka dialog print\n' +
-      '2. Pilih "Save as PDF" atau "Microsoft Print to PDF" sebagai printer\n' +
-      '3. Klik Save/Print\n\n' +
-      'Catatan: Footer dengan informasi Kelas, Nama, dan Halaman akan otomatis ditambahkan.'
-    );
-
-    if (userConfirmed) {
-      window.print();
-    }
-  };
-
   const RaporPage1 = ({ student, layoutType: passedLayoutType }) => {
     const currentLayout = passedLayoutType || layoutType;
     const subjectsWithValues = getSubjectsWithValues();
