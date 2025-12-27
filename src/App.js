@@ -567,7 +567,7 @@ const RaporApp = () => {
         {/* Tabel Nilai */}
         {currentLayout === 'kelas10' ? (
           // Layout Kelas 10 - Tampilan Standar
-          <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
+          <table className="w-full border-collapse text-xs mb-4 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '5%' }} />
               <col style={{ width: '30%' }} />
@@ -576,10 +576,10 @@ const RaporApp = () => {
             </colgroup>
             <thead>
               <tr className="bg-gray-300">
-                <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-                <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-                <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-                <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
               </tr>
             </thead>
             <tbody>
@@ -615,7 +615,7 @@ const RaporApp = () => {
           // Layout Kelas 11/12 - Dua Tabel dengan Gap
           <div>
             {/* Tabel 1 - Mata Pelajaran Wajib */}
-            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
+            <table className="w-full border-collapse text-xs mb-4 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: '5%' }} />
                 <col style={{ width: '30%' }} />
@@ -624,15 +624,15 @@ const RaporApp = () => {
               </colgroup>
               <thead>
                 <tr className="bg-gray-300">
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-gray-300">
-                  <th colSpan="4" className="border border-black px-2 py-2 text-left font-bold">A. Kelompok Mata Pelajaran Wajib</th>
+                  <th colSpan="4" className="border border-black px-2 py-1.5 text-center font-bold">Kelompok Mata Pelajaran Wajib</th>
                 </tr>
                 {displaySubjects
                   .filter(subject => requiredSubjects.includes(subject.name))
@@ -665,11 +665,10 @@ const RaporApp = () => {
               </tbody>
             </table>
 
-            {/* Gap */}
-            <div className="mb-6"></div>
+
 
             {/* Tabel 2 - Mata Pelajaran Pilihan */}
-            <table className="w-full border-collapse text-xs mb-6 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
+            <table className="w-full border-collapse text-xs mb-4 nilai-table" style={{ borderCollapse: 'collapse', borderSpacing: '0', tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: '5%' }} />
                 <col style={{ width: '30%' }} />
@@ -678,15 +677,15 @@ const RaporApp = () => {
               </colgroup>
               <thead>
                 <tr className="bg-gray-300">
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-                  <th className={`border border-black px-2 py-1 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
+                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-gray-300">
-                  <th colSpan="4" className="border border-black px-2 py-2 text-left font-bold">B. Kelompok Mata Pelajaran Pilihan</th>
+                  <th colSpan="4" className="border border-black px-2 py-1.5 text-center font-bold">Kelompok Mata Pelajaran Pilihan</th>
                 </tr>
                 {displaySubjects
                   .filter(subject => electiveSubjects.includes(subject.name))
@@ -720,37 +719,23 @@ const RaporApp = () => {
             </table>
           </div>
         )}
-      </div>
-    );
-  };
 
-  const RaporPage2 = ({ student }) => {
-    const pageStyle = isMobile ? {
-      padding: '12px',
-      fontSize: '11px'
-    } : {
-      padding: '0',
-      fontSize: '12px'
-    };
-
-    return (
-      <div className="bg-white rapor-page-2" style={pageStyle}>
-        {/* Kokurikuler */}
-        <div className="mb-3 mt-3">
-          <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold text-xs">Kokurikuler</div>
-          <div className="border border-black px-1 py-1 min-h-12" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
-            {student?.kokurikuler || 'Ananda sudah baik dalam kreativitas yang terlihat dari kemampuan menemukan dan mengembangkan alternatif solusi yang efektif pada tema konservasi energi. Ananda masih perlu berlatih dalam mengomunikasikan gagasan.'}
+        {/* Kokurikuler (Follows mapel for BOTH layouts) */}
+        <div className="text-xs">
+          <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-1.5 font-bold text-center">Kokurikuler</div>
+          <div className="border-t border-l border-r border-black px-1 py-1 min-h-12" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
+            {student?.kokurikuler || 'Ananda sudah baik dalam kreativitas yang terlihat dari kemampuan menemukan and mengembangkan alternatif solusi yang efektif pada tema konservasi energi. Ananda masih perlu berlatih dalam mengomunikasikan gagasan.'}
           </div>
         </div>
 
-        {/* Ekstrakurikuler */}
-        <div className="mb-3">
-          <table className="w-full border-collapse text-xs" style={{ borderCollapse: 'collapse', borderSpacing: '0' }}>
+        {/* Ekstrakurikuler (Follows Kokurikuler) - Sticks to it because Kokurikuler has no bottom border/margin */}
+        <div className="mb-4">
+          <table className="w-full border-collapse text-xs table-fixed" style={{ borderCollapse: 'collapse', borderSpacing: '0' }}>
             <thead>
               <tr className="bg-gray-300">
-                <th className="border border-black px-2 py-2 w-8">No.</th>
-                <th className="border border-black px-2 py-2 text-left" style={{ width: '30%' }}>Ekstrakurikuler</th>
-                <th className="border border-black px-2 py-2">Keterangan</th>
+                <th className="border border-black px-2 py-1.5 w-[5%] text-center">No.</th>
+                <th className="border border-black px-2 py-1.5 text-left w-[30%]">Ekstrakurikuler</th>
+                <th className="border border-black px-2 py-1.5 text-center w-[65%]">Keterangan</th>
               </tr>
             </thead>
             <tbody>
@@ -759,7 +744,7 @@ const RaporApp = () => {
                   {student.ekstrakurikuler.map((ekskul, idx) => (
                     <tr key={idx}>
                       <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
-                      <td className="border border-black px-2 py-1 align-middle" style={{ width: '30%', fontSize: isMobile ? '10px' : '12px' }}>{ekskul.nama}</td>
+                      <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>{ekskul.nama}</td>
                       <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                         {ekskul.keterangan}
                       </td>
@@ -770,14 +755,14 @@ const RaporApp = () => {
                 <>
                   <tr>
                     <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>1</td>
-                    <td className="border border-black px-2 py-1 align-middle" style={{ width: '30%', fontSize: isMobile ? '10px' : '12px' }}>Pramuka</td>
+                    <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>Pramuka</td>
                     <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                       Trampil dan disiplin dalam kegiatan kepramukaan
                     </td>
                   </tr>
                   <tr>
                     <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>2</td>
-                    <td className="border border-black px-2 py-1 align-middle" style={{ width: '30%', fontSize: isMobile ? '10px' : '12px' }}>PMR</td>
+                    <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>PMR</td>
                     <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                       Aktif remaja sehat peduli sesama dan kesehatan remaja
                     </td>
@@ -788,10 +773,10 @@ const RaporApp = () => {
           </table>
         </div>
 
-        {/* Ketidakhadiran dan Catatan */}
-        <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+        {/* Ketidakhadiran dan Catatan (Moved here for single-page flow) */}
+        <div className="grid grid-cols-2 gap-3 mb-4 text-xs">
           <div>
-            <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Ketidakhadiran</div>
+            <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-1.5 font-bold text-center">Ketidakhadiran</div>
             <table className="w-full border-collapse" style={{ borderCollapse: 'collapse', borderSpacing: '0' }}>
               <tbody>
                 <tr>
@@ -810,7 +795,7 @@ const RaporApp = () => {
             </table>
           </div>
           <div>
-            <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
+            <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-1.5 font-bold text-center">Catatan Wali Kelas</div>
             <div className="border border-black px-1 py-1" style={{ minHeight: '72px', fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
               {student?.catatanWaliKelas || ''}
             </div>
@@ -818,14 +803,13 @@ const RaporApp = () => {
         </div>
 
         {/* Tanggapan Orang Tua */}
-        <div className="mb-3 text-xs">
-          <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Tanggapan Orang Tua/Wali Murid</div>
+        <div className="mb-4 text-xs">
+          <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-1.5 font-bold text-center">Tanggapan Orang Tua/Wali Murid</div>
           <div className="border border-black px-2 py-2 min-h-12"></div>
         </div>
 
         {/* Tanda Tangan */}
         <div className="text-xs mt-4">
-          {/* Row 1: Orang Tua (left) and Tempat/Tanggal + Wali Kelas (right) */}
           <div className="grid grid-cols-3 gap-6">
             <div className="text-left pl-8">
               <p>Orang Tua/Wali</p>
@@ -837,7 +821,6 @@ const RaporApp = () => {
               <p>{student?.identitas?.tempat}, {(() => {
                 const tanggal = student?.identitas?.tanggal;
                 if (!tanggal) return '-';
-                // If it's a number (Excel date), convert it
                 if (typeof tanggal === 'number') {
                   const date = new Date((tanggal - 25569) * 86400 * 1000);
                   return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -848,8 +831,6 @@ const RaporApp = () => {
               <p className="font-bold">{student?.identitas?.namaWaliKelas || 'Wali Kelas'}</p>
             </div>
           </div>
-
-          {/* Row 2: Mengetahui Kepala Sekolah (middle) */}
           <div className="grid grid-cols-3 gap-6 mt-6">
             <div></div>
             <div className="text-left">
@@ -864,6 +845,8 @@ const RaporApp = () => {
       </div>
     );
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
@@ -894,15 +877,6 @@ const RaporApp = () => {
           /* Container untuk RaporPage1 bisa melanjut ke page 2 */
           .rapor-page-1 { 
             page-break-after: auto; 
-            box-sizing: border-box;
-            width: 100%;
-            padding: 0;
-            box-shadow: none !important;
-            margin-bottom: 0 !important;
-          }
-          .rapor-page-2 { 
-            page-break-before: auto; 
-            page-break-after: always;
             box-sizing: border-box;
             width: 100%;
             padding: 0;
@@ -949,8 +923,8 @@ const RaporApp = () => {
                       <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
                         <Upload size={16} /> 1. Upload Excel
                       </h2>
-                      <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-bold w-full justify-center shadow-sm">
-                        <Upload size={16} />
+                      <label className="flex items-center justify-center gap-2 px-3 h-[36px] bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-[11px] font-bold w-full shadow-sm">
+                        <Upload size={14} />
                         Pilih File
                         <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                       </label>
@@ -966,7 +940,7 @@ const RaporApp = () => {
                         <button
                           onClick={handleFetchSpreadsheet}
                           disabled={isFetching}
-                          className={`flex items-center justify-center gap-2 px-3 py-1.5 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
+                          className={`flex items-center justify-center gap-2 px-3 h-[36px] ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
                         >
                           <FileSpreadsheet size={14} />
                           {isFetching ? 'Loading...' : 'Tarik Data'}
@@ -975,7 +949,7 @@ const RaporApp = () => {
                           value={selectedClassSheet}
                           onChange={(e) => setSelectedClassSheet(e.target.value)}
                           disabled={!isSheetsLoaded}
-                          className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
+                          className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 h-[36px] text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
                         >
                           {!isSheetsLoaded && <option value="">Pilih Kelas (Tarik Data dulu)</option>}
                           {availableSheets.map(cls => (
@@ -1001,13 +975,13 @@ const RaporApp = () => {
                       <div className="flex flex-col gap-1">
                         <button
                           onClick={() => setLayoutType('kelas10')}
-                          className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                          className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                         >
                           Kelas 10
                         </button>
                         <button
                           onClick={() => setLayoutType('kelas1112')}
-                          className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                          className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                         >
                           Kelas 11/12
                         </button>
@@ -1024,7 +998,7 @@ const RaporApp = () => {
                         </h2>
                         <div className="flex flex-col gap-2">
                           <select
-                            className="w-full border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                            className="w-full border border-gray-300 rounded px-2 h-[36px] focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                             onChange={(e) => {
                               setSelectedStudent(students[e.target.value]);
                               setViewMode('single');
@@ -1038,19 +1012,19 @@ const RaporApp = () => {
                           <div className="flex flex-col gap-2">
                             <button
                               onClick={() => setViewMode('single')}
-                              className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                              className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                             >
                               Lihat 1 Siswa
                             </button>
                             <button
                               onClick={() => setViewMode('all')}
-                              className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                              className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                             >
                               Lihat Semua
                             </button>
                             <button
                               onClick={handlePrint}
-                              className="w-full py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-2 text-[11px] font-bold shadow-sm"
+                              className="w-full h-[36px] bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-2 text-[11px] font-bold shadow-sm"
                             >
                               <Printer size={14} />
                               Print
@@ -1068,12 +1042,15 @@ const RaporApp = () => {
                       <div className="flex items-center justify-between gap-1 bg-white p-1 rounded border border-orange-200">
                         <button
                           onClick={() => setCompetencyFontSize(Math.max(8, competencyFontSize - 1))}
-                          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold"
+                          className="w-10 h-[36px] flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold transition"
                         > - </button>
-                        <span className="text-xs font-bold">{competencyFontSize}px</span>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px] text-gray-500 font-medium leading-none mb-1">Font Deskripsi</span>
+                          <span className="text-sm font-bold">{competencyFontSize}px</span>
+                        </div>
                         <button
                           onClick={() => setCompetencyFontSize(Math.min(14, competencyFontSize + 1))}
-                          className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold"
+                          className="w-10 h-[36px] flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold transition"
                         > + </button>
                       </div>
                     </div>
@@ -1088,8 +1065,8 @@ const RaporApp = () => {
                   <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
                     <Upload size={18} /> 1. Upload Excel
                   </h2>
-                  <label className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-[13px] font-bold w-full justify-center shadow-sm">
-                    <Upload size={18} />
+                  <label className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-[11px] font-bold w-full shadow-sm">
+                    <Upload size={14} />
                     Pilih File
                     <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                   </label>
@@ -1105,7 +1082,7 @@ const RaporApp = () => {
                     <button
                       onClick={handleFetchSpreadsheet}
                       disabled={isFetching}
-                      className={`flex items-center justify-center gap-2 px-3 py-1.5 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
                     >
                       <FileSpreadsheet size={14} />
                       {isFetching ? 'Loading...' : 'Tarik Data'}
@@ -1114,7 +1091,7 @@ const RaporApp = () => {
                       value={selectedClassSheet}
                       onChange={(e) => setSelectedClassSheet(e.target.value)}
                       disabled={!isSheetsLoaded}
-                      className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
+                      className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
                     >
                       {!isSheetsLoaded && <option value="">Pilih Kelas (Tarik Data dulu)</option>}
                       {availableSheets.map(cls => (
@@ -1140,13 +1117,13 @@ const RaporApp = () => {
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => setLayoutType('kelas10')}
-                      className={`px-3 py-1.5 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      className={`px-3 py-2 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                     >
                       Kelas 10
                     </button>
                     <button
                       onClick={() => setLayoutType('kelas1112')}
-                      className={`px-3 py-1.5 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      className={`px-3 py-2 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                     >
                       Kelas 11/12
                     </button>
@@ -1160,7 +1137,7 @@ const RaporApp = () => {
                   </h2>
                   <div className="flex flex-col gap-2">
                     <select
-                      className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                       onChange={(e) => {
                         setSelectedStudent(students[e.target.value]);
                         setViewMode('single');
@@ -1173,19 +1150,19 @@ const RaporApp = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => setViewMode('single')}
-                        className={`flex-1 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                       >
                         Tampilkan 1 Siswa
                       </button>
                       <button
                         onClick={() => setViewMode('all')}
-                        className={`flex-1 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                       >
                         Tampilkan Semua
                       </button>
                       <button
                         onClick={handlePrint}
-                        className="flex-1 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-1 text-[10px] font-bold shadow-sm"
+                        className="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-1 text-[11px] font-bold shadow-sm"
                       >
                         <Printer size={14} />
                         Cetak
@@ -1208,7 +1185,7 @@ const RaporApp = () => {
                         -
                       </button>
                       <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-gray-500 font-medium">Font TP</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Font Deskripsi</span>
                         <span className="text-sm font-bold text-orange-700">{competencyFontSize}px</span>
                       </div>
                       <button
@@ -1238,27 +1215,19 @@ const RaporApp = () => {
                 // Single student view - show both pages
                 <>
                   <RaporPage1 student={selectedStudent} layoutType={layoutType} />
-                  <div className="border-t-2 border-dashed border-gray-300 py-2 text-center text-xs text-gray-400 print:hidden">
-                    ────── HALAMAN 2 ──────
-                  </div>
-                  <RaporPage2 student={selectedStudent} />
                 </>
               ) : (
                 // All students view
                 <>
                   {students.map((student, index) => (
-                    <React.Fragment key={index}>
+                    <div key={index} className={index < students.length - 1 ? "page-break" : ""}>
                       <RaporPage1 student={student} layoutType={layoutType} />
-                      <div className="border-t-2 border-dashed border-gray-300 py-2 text-center text-xs text-gray-400 print:hidden">
-                        ────── HALAMAN 2 ──────
-                      </div>
-                      <RaporPage2 student={student} />
                       {index < students.length - 1 && (
                         <div className="border-t-4 border-double border-gray-400 py-3 my-2 text-center text-xs text-gray-500 font-semibold print:hidden">
                           ═══════ SISWA BERIKUTNYA ═══════
                         </div>
                       )}
-                    </React.Fragment>
+                    </div>
                   ))}
                 </>
               )}
