@@ -632,7 +632,7 @@ const RaporApp = () => {
               </thead>
               <tbody>
                 <tr className="bg-gray-300">
-                  <th colSpan="4" className="border border-black px-2 py-1.5 text-center font-bold">Kelompok Mata Pelajaran Wajib</th>
+                  <th colSpan="4" className="border border-black px-2 py-1.5 text-left font-bold">Kelompok Mata Pelajaran Wajib</th>
                 </tr>
                 {displaySubjects
                   .filter(subject => requiredSubjects.includes(subject.name))
@@ -685,7 +685,7 @@ const RaporApp = () => {
               </thead>
               <tbody>
                 <tr className="bg-gray-300">
-                  <th colSpan="4" className="border border-black px-2 py-1.5 text-center font-bold">Kelompok Mata Pelajaran Pilihan</th>
+                  <th colSpan="4" className="border border-black px-2 py-1.5 text-left font-bold">Kelompok Mata Pelajaran Pilihan</th>
                 </tr>
                 {displaySubjects
                   .filter(subject => electiveSubjects.includes(subject.name))
@@ -721,14 +721,14 @@ const RaporApp = () => {
         )}
 
         {/* Kokurikuler (Follows mapel for BOTH layouts) */}
-        <div className="text-xs">
+        <div className="text-xs mt-4 mb-4">
           <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-1.5 font-bold text-center">Kokurikuler</div>
-          <div className="border-t border-l border-r border-black px-1 py-1 min-h-12" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
+          <div className="border border-black px-1 py-1 min-h-12" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
             {student?.kokurikuler || 'Ananda sudah baik dalam kreativitas yang terlihat dari kemampuan menemukan and mengembangkan alternatif solusi yang efektif pada tema konservasi energi. Ananda masih perlu berlatih dalam mengomunikasikan gagasan.'}
           </div>
         </div>
 
-        {/* Ekstrakurikuler (Follows Kokurikuler) - Sticks to it because Kokurikuler has no bottom border/margin */}
+        {/* Ekstrakurikuler (Follows Kokurikuler) */}
         <div className="mb-4">
           <table className="w-full border-collapse text-xs table-fixed" style={{ borderCollapse: 'collapse', borderSpacing: '0' }}>
             <thead>
