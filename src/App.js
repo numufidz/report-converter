@@ -11,9 +11,12 @@ const RaporApp = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [layoutType, setLayoutType] = useState('kelas10'); // 'kelas10' or 'kelas1112'
   const [spreadsheetId] = useState('1vNFphN9h2GPdVykILiHSLblilN8j7txN');
-  const [selectedClassSheet, setSelectedClassSheet] = useState('10A');
+  const [selectedClassSheet, setSelectedClassSheet] = useState('');
+  const [availableSheets, setAvailableSheets] = useState([]);
+  const [isSheetsLoaded, setIsSheetsLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [competencyFontSize, setCompetencyFontSize] = useState(10);
+  const [workbook, setWorkbook] = useState(null);
 
   // Daftar mata pelajaran wajib
   const requiredSubjects = [
@@ -265,8 +268,14 @@ const RaporApp = () => {
     // Tentukan sheet data nilai dan sheet kurikulum
     // Jika customClassSheet ada, cari sheet dengan nama tersebut. Jika tidak ada, pakai sheet pertama.
     let nilaiSheetName = sheetNames[0];
-    if (customClassSheet && sheetNames.includes(customClassSheet)) {
-      nilaiSheetName = customClassSheet;
+    if (customClassSheet) {
+      const target = String(customClassSheet).trim().toLowerCase();
+      const foundSheet = sheetNames.find(name =>
+        String(name).trim().toLowerCase() === target
+      );
+      if (foundSheet) {
+        nilaiSheetName = foundSheet;
+      }
     }
 
     // Cari sheet kurikulum (biasanya sheet ke-7 atau bernama 'Kurikulum')
@@ -297,7 +306,18 @@ const RaporApp = () => {
     });
 
     // Find subject columns dynamically from header row (row 8, index 7)
-    const headerRow = nilaiData[7] || [];
+    // Dynamically find main header row (normally Row 8, index 7)
+    let mainHeaderIndex = 7; // default fallback
+    for (let i = 0; i < Math.min(nilaiData.length, 20); i++) {
+      const r = nilaiData[i] || [];
+      const rowStr = r.map(c => String(c || '').toLowerCase()).join(' ');
+      if (rowStr.includes('nama') && rowStr.includes('nis')) {
+        mainHeaderIndex = i;
+        break;
+      }
+    }
+
+    const headerRow = nilaiData[mainHeaderIndex] || [];
     const subjectColumns = findSubjectColumns(headerRow);
     const headerValidation = validateHeaderRow(headerRow);
 
@@ -305,9 +325,29 @@ const RaporApp = () => {
       throw new Error('Tidak ada mata pelajaran yang dikenali di sheet ' + nilaiSheetName);
     }
 
-    // Parse data siswa dari baris 10+ (index 9+)
-    const nilaiRows = nilaiData.slice(9);
+    // Ekskul Header is Row 9 (index 8), which is mainHeaderIndex + 1
+    const ekskulHeaderIndex = mainHeaderIndex + 1;
+    const ekskulHeaderRow = nilaiData[ekskulHeaderIndex] || [];
+
+    // Parse data siswa starts from index after ekskul header
+    const nilaiRows = nilaiData.slice(ekskulHeaderIndex + 1);
     const studentMap = {};
+
+    // Ekskul names: AP - AT (Indices 41 - 45)
+    const ekskulNames = [];
+    for (let i = 41; i <= 45; i++) {
+      if (ekskulHeaderRow[i] && String(ekskulHeaderRow[i]).trim() !== '') {
+        ekskulNames.push({ name: String(ekskulHeaderRow[i]).trim(), index: i });
+      }
+    }
+
+    const getEkskulDescription = (grade) => {
+      const g = String(grade || '').trim().toUpperCase();
+      if (g === 'A') return 'Menunjukkan keaktifan, kedisiplinan, dan tanggung jawab yang sangat baik selama mengikuti setiap kegiatan.';
+      if (g === 'B') return 'Menunjukkan keaktifan dan sikap yang baik dalam mengikuti setiap kegiatan meskipun masih perlu peningkatan konsistensi.';
+      if (g === 'C') return 'Mengikuti setiap kegiatan dengan cukup baik namun perlu meningkatkan keaktifan dan kedisiplinan.';
+      return null;
+    };
 
     nilaiRows.forEach((row) => {
       if (!row[2] || row[2] === 'RATA-RATA KELAS' || String(row[2]).trim() === '') return;
@@ -320,12 +360,18 @@ const RaporApp = () => {
           Nama: nama,
           subjects: {},
           identitas: { ...schoolInfo },
-          kokurikuler: '',
+          kokurikuler: row[40] || '', // AO
           ekstrakurikuler: [],
-          ketidakhadiran: {}
+          ketidakhadiran: {
+            sakit: row[46] || 0,   // AU
+            izin: row[47] || 0,    // AV
+            tanpaKet: row[48] || 0 // AW
+          },
+          catatanWaliKelas: row[49] || '' // AX
         };
       }
 
+      // Populate Subjects
       Object.entries(subjectColumns).forEach(([subjectName, indices]) => {
         const ketVal = row[indices.ketIndex];
         const pengVal = row[indices.pengIndex];
@@ -335,9 +381,24 @@ const RaporApp = () => {
           avg: calculateAverage(ketVal, pengVal)
         };
       });
+
+      // Populate Ekskul
+      const participations = [];
+      ekskulNames.forEach(ekskul => {
+        const grade = row[ekskul.index];
+        const description = getEkskulDescription(grade);
+        if (description) {
+          participations.push({
+            nama: ekskul.name,
+            grade: grade,
+            keterangan: description
+          });
+        }
+      });
+      studentMap[nama].ekstrakurikuler = participations;
     });
 
-    // Parse Kurikulum
+    // Parse Kurikulum (Dapatkan deskripsi TP-nya)
     let parsedCurriculum = {};
     const kurikulumSheet = workbook.Sheets[kurikulumSheetName];
     if (kurikulumSheet) {
@@ -361,7 +422,7 @@ const RaporApp = () => {
       });
     }
 
-    // Parse data pelengkap (Kolom AO-AU pada nilaiData)
+    // Parse data pelengkap (info sekolah tambahan dari baris 1-4)
     [0, 1, 2, 3].forEach(idx => {
       if (nilaiData[idx] && nilaiData[idx][40] && nilaiData[idx][41]) {
         const key = String(nilaiData[idx][40]).toLowerCase().trim();
@@ -386,27 +447,6 @@ const RaporApp = () => {
       });
     }
 
-    const ekskul1Name = nilaiData[7]?.[42] || 'Pramuka';
-    const ekskul2Name = nilaiData[7]?.[43] || 'PMR';
-
-    nilaiRows.forEach((row) => {
-      if (!row[2] || row[2] === 'RATA-RATA KELAS' || String(row[2]).trim() === '') return;
-      const nama = row[2];
-      if (studentMap[nama]) {
-        studentMap[nama].kokurikuler = row[40] || '';
-        studentMap[nama].ekstrakurikuler = [
-          { nama: ekskul1Name, keterangan: row[41] || '' },
-          { nama: ekskul2Name, keterangan: row[42] || '' }
-        ];
-        studentMap[nama].ketidakhadiran = {
-          sakit: row[43] || 0,
-          izin: row[44] || 0,
-          tanpaKet: row[45] || 0
-        };
-        studentMap[nama].catatanWaliKelas = row[46] || '';
-      }
-    });
-
     return {
       processedStudents: Object.values(studentMap),
       orderedSubjects: Object.keys(subjectColumns),
@@ -423,9 +463,29 @@ const RaporApp = () => {
       if (!response.ok) throw new Error('Gagal mendownload spreadsheet. Pastikan link disetel ke "Anyone with the link can view".');
 
       const buffer = await response.arrayBuffer();
-      const workbook = XLSX.read(buffer);
+      const wb = XLSX.read(buffer);
+      setWorkbook(wb);
 
-      const result = processWorkbookData(workbook, selectedClassSheet);
+      // Detect and filter class sheets
+      const sheetNames = wb.SheetNames;
+      const classSheets = sheetNames.filter(name => {
+        const lower = name.toLowerCase();
+        // Aturan: mengandung angka (kelas) ATAU kata 'kelas', dan BUKAN 'kurikulum'
+        return (lower.match(/\d+/) || lower.includes('kelas')) && !lower.includes('kurikulum');
+      });
+
+      if (classSheets.length === 0) {
+        throw new Error('Tidak ditemukan sheet kelas yang sesuai kriteria penamaan.');
+      }
+
+      setAvailableSheets(classSheets);
+      setIsSheetsLoaded(true);
+
+      // Default to the first detected sheet
+      const defaultSheet = classSheets[0];
+      setSelectedClassSheet(defaultSheet);
+
+      const result = processWorkbookData(wb, defaultSheet);
 
       setSubjectOrder(result.orderedSubjects);
       setStudents(result.processedStudents);
@@ -433,7 +493,7 @@ const RaporApp = () => {
         setSelectedStudent(result.processedStudents[0]);
       }
 
-      alert(`✅ Berhasil menarik data kelas ${selectedClassSheet}\n👥 ${result.processedStudents.length} siswa dimuat.`);
+      alert(`✅ Berhasil terhubung!\n📁 Terdeteksi ${classSheets.length} kelas.\n👥 Memuat data kelas: ${defaultSheet}`);
     } catch (error) {
       console.error('Fetch error:', error);
       alert('❌ Error: ' + error.message);
@@ -442,15 +502,50 @@ const RaporApp = () => {
     }
   };
 
+  // Re-process if user changes the sheet from dropdown
+  useEffect(() => {
+    if (workbook && selectedClassSheet && isSheetsLoaded) {
+      try {
+        const result = processWorkbookData(workbook, selectedClassSheet);
+        setSubjectOrder(result.orderedSubjects);
+        setStudents(result.processedStudents);
+        if (result.processedStudents.length > 0) {
+          setSelectedStudent(result.processedStudents[0]);
+        }
+      } catch (error) {
+        console.error('Error switching sheet:', error);
+      }
+    }
+  }, [selectedClassSheet, workbook, isSheetsLoaded]);
+
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { delimiter: ';' });
+      const wb = XLSX.read(data, { delimiter: ';' });
+      setWorkbook(wb);
 
-      const result = processWorkbookData(workbook);
+      // Detect and filter class sheets
+      const sheetNames = wb.SheetNames;
+      const classSheets = sheetNames.filter(name => {
+        const lower = name.toLowerCase();
+        return (lower.match(/\d+/) || lower.includes('kelas')) && !lower.includes('kurikulum');
+      });
+
+      if (classSheets.length === 0) {
+        throw new Error('Tidak ditemukan sheet kelas yang sesuai kriteria penamaan.');
+      }
+
+      setAvailableSheets(classSheets);
+      setIsSheetsLoaded(true);
+
+      // Default to the first detected sheet
+      const defaultSheet = classSheets[0];
+      setSelectedClassSheet(defaultSheet);
+
+      const result = processWorkbookData(wb, defaultSheet);
 
       setSubjectOrder(result.orderedSubjects);
       setStudents(result.processedStudents);
@@ -458,7 +553,7 @@ const RaporApp = () => {
         setSelectedStudent(result.processedStudents[0]);
       }
 
-      alert(`✅ Berhasil memuat ${result.processedStudents.length} siswa.`);
+      alert(`✅ Berhasil memuat file!\n📁 Terdeteksi ${classSheets.length} kelas.\n👥 Memuat data kelas: ${defaultSheet}`);
     } catch (error) {
       console.error('Error reading file:', error);
       alert('❌ Gagal membaca file: ' + error.message);
@@ -741,7 +836,7 @@ const RaporApp = () => {
         {/* Kokurikuler */}
         <div className="mb-3 mt-3">
           <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold text-xs">Kokurikuler</div>
-          <div className="border border-black px-2 py-2 min-h-12 text-xs">
+          <div className="border border-black px-1 py-1 min-h-12" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
             {student?.kokurikuler || 'Ananda sudah baik dalam kreativitas yang terlihat dari kemampuan menemukan dan mengembangkan alternatif solusi yang efektif pada tema konservasi energi. Ananda masih perlu berlatih dalam mengomunikasikan gagasan.'}
           </div>
         </div>
@@ -761,23 +856,29 @@ const RaporApp = () => {
                 <>
                   {student.ekstrakurikuler.map((ekskul, idx) => (
                     <tr key={idx}>
-                      <td className="border border-black px-2 py-2 text-center">{idx + 1}</td>
-                      <td className="border border-black px-2 py-2" style={{ width: '30%' }}>{ekskul.nama}</td>
-                      <td className="border border-black px-2 py-2">{ekskul.keterangan}</td>
+                      <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 align-middle" style={{ width: '30%', fontSize: isMobile ? '10px' : '12px' }}>{ekskul.nama}</td>
+                      <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
+                        {ekskul.keterangan}
+                      </td>
                     </tr>
                   ))}
                 </>
               ) : (
                 <>
                   <tr>
-                    <td className="border border-black px-2 py-2 text-center">1</td>
-                    <td className="border border-black px-2 py-2" style={{ width: '30%' }}>Pramuka</td>
-                    <td className="border border-black px-2 py-2">Trampil dan disiplin dalam kegiatan kepramukaan</td>
+                    <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>1</td>
+                    <td className="border border-black px-2 py-1 align-middle" style={{ width: '30%', fontSize: isMobile ? '10px' : '12px' }}>Pramuka</td>
+                    <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
+                      Trampil dan disiplin dalam kegiatan kepramukaan
+                    </td>
                   </tr>
                   <tr>
-                    <td className="border border-black px-2 py-2 text-center">2</td>
-                    <td className="border border-black px-2 py-2" style={{ width: '30%' }}>PMR</td>
-                    <td className="border border-black px-2 py-2">Aktif remaja sehat peduli sesama dan kesehatan remaja</td>
+                    <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>2</td>
+                    <td className="border border-black px-2 py-1 align-middle" style={{ width: '30%', fontSize: isMobile ? '10px' : '12px' }}>PMR</td>
+                    <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
+                      Aktif remaja sehat peduli sesama dan kesehatan remaja
+                    </td>
                   </tr>
                 </>
               )}
@@ -808,7 +909,7 @@ const RaporApp = () => {
           </div>
           <div>
             <div className="bg-gray-300 border-t border-l border-r border-black px-2 py-2 font-bold">Catatan Wali Kelas</div>
-            <div className="border border-black px-2 py-2 text-xs" style={{ minHeight: '72px' }}>
+            <div className="border border-black px-1 py-1" style={{ minHeight: '72px', fontSize: `${competencyFontSize}px`, lineHeight: '1.2' }}>
               {student?.catatanWaliKelas || ''}
             </div>
           </div>
@@ -970,9 +1071,11 @@ const RaporApp = () => {
                         <select
                           value={selectedClassSheet}
                           onChange={(e) => setSelectedClassSheet(e.target.value)}
-                          className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          disabled={!isSheetsLoaded}
+                          className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
                         >
-                          {['10A', '10B', '11A', '11B', '12A', '12B'].map(cls => (
+                          {!isSheetsLoaded && <option value="">Pilih Kelas (Tarik Data dulu)</option>}
+                          {availableSheets.map(cls => (
                             <option key={cls} value={cls}>Kelas {cls}</option>
                           ))}
                         </select>
@@ -1106,9 +1209,11 @@ const RaporApp = () => {
                     <select
                       value={selectedClassSheet}
                       onChange={(e) => setSelectedClassSheet(e.target.value)}
-                      className="w-full border border-blue-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      disabled={!isSheetsLoaded}
+                      className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
                     >
-                      {['10A', '10B', '11A', '11B', '12A', '12B'].map(cls => (
+                      {!isSheetsLoaded && <option value="">Pilih Kelas (Tarik Data dulu)</option>}
+                      {availableSheets.map(cls => (
                         <option key={cls} value={cls}>Kelas {cls}</option>
                       ))}
                     </select>
