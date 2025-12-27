@@ -1,6 +1,150 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Upload, Printer, FileSpreadsheet, Menu, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
+
+// Daftar mata pelajaran wajib
+const requiredSubjects = [
+  'Pendidikan Agama Islam',
+  'Pendidikan Pancasila dan Kewarganegaraan',
+  'Bahasa Indonesia',
+  'Matematika',
+  'Sejarah Indonesia',
+  'Bahasa Inggris',
+  'Pendidikan Jasmani Olahraga dan Kesehatan',
+  'Seni Budaya',
+  'Teknologi Informasi dan Komunikasi',
+  'Informatika',
+  'Prakarya dan Kewirausahaan',
+  'Bahasa Daerah/Jawa',
+  'Aswaja',
+  'Fisika',
+  'Kimia',
+  'Biologi'
+];
+
+// Daftar mata pelajaran pilihan
+const electiveSubjects = [
+  'Sejarah/Sejarah Peminatan',
+  'Geografi',
+  'Sosiologi',
+  'Ekonomi',
+  'Ekonomi Akuntansi',
+  'Antropologi',
+  'Bahasa dan Sastra Arab',
+  'Bahasa dan Sastra Indonesia',
+  'Bahasa dan Sastra Inggris',
+  'Bahasa Indonesia Tingkat Lanjut',
+  'Bahasa Inggris Tingkat Lanjut',
+  'Keterampilan Bahasa Inggris'
+];
+
+// List of all subject names (for dynamic column matching)
+const allSubjectNames = [
+  ...requiredSubjects,
+  ...electiveSubjects
+];
+
+// Helper functions moved outside component scope
+const calculateAverage = (ket, peng) => {
+  const ketVal = parseFloat(String(ket).replace(',', '.'));
+  const pengVal = parseFloat(String(peng).replace(',', '.'));
+  if (isNaN(ketVal) || isNaN(pengVal)) return '-';
+  const avg = (ketVal + pengVal) / 2;
+  return avg.toFixed(2);
+};
+
+const findSubjectColumns = (headerRow) => {
+  const subjectColumns = {};
+  const trimmedHeader = headerRow.map(h => h ? String(h).trim().toLowerCase() : '');
+  allSubjectNames.forEach(subjectName => {
+    const subjectLower = subjectName.toLowerCase();
+    let foundIndex = -1;
+    for (let i = 0; i < trimmedHeader.length; i++) {
+      if (trimmedHeader[i] === subjectLower) {
+        foundIndex = i;
+        break;
+      }
+    }
+    if (foundIndex !== -1) {
+      subjectColumns[subjectName] = {
+        ketIndex: foundIndex,
+        pengIndex: foundIndex + 1
+      };
+    }
+  });
+  return subjectColumns;
+};
+
+const validateHeaderRow = (headerRow) => {
+  const trimmedHeader = headerRow.map(h => h ? String(h).trim().toLowerCase() : '');
+  const recognizedSubjects = [];
+  const unrecognizedSubjects = new Set();
+  allSubjectNames.forEach(subjectName => {
+    if (trimmedHeader.includes(subjectName.toLowerCase())) {
+      recognizedSubjects.push(subjectName);
+    }
+  });
+  const systemColumns = [
+    'no', 'nis', 'nama', 'rata-rata', 'keterangan', 'sakit', 'izin', 'tanpa',
+    'kepala', 'wali', 'kelas', 'sekolah', 'fase', 'semester', 'tahun', 'tempat', 'tanggal', 'pramuka', 'pmr',
+    'deskripsi kokurikuler', 'ekstrakurikuler', 'ketidakhadiran', 'catatan wali kelas'
+  ];
+  trimmedHeader.forEach((header) => {
+    if (header &&
+      !systemColumns.includes(header) &&
+      !recognizedSubjects.map(s => s.toLowerCase()).includes(header) &&
+      !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa|kelompok)$/)) {
+      unrecognizedSubjects.add(header);
+    }
+  });
+  return { recognizedSubjects, unrecognizedSubjects: Array.from(unrecognizedSubjects) };
+};
+
+const parseKurikulum = (kurikulumData) => {
+  const curriculumObj = {};
+  for (let i = 1; i < kurikulumData.length; i++) {
+    const row = kurikulumData[i];
+    if (!row || !row[1]) break;
+    const mapelName = String(row[1] || '').trim();
+    if (!mapelName || mapelName === '') continue;
+    curriculumObj[mapelName] = {
+      class_10: { tp1: String(row[4] || '').trim(), tp2: String(row[5] || '').trim() },
+      class_11: { tp1: String(row[7] || '').trim(), tp2: String(row[8] || '').trim() },
+      class_12: { tp1: String(row[10] || '').trim(), tp2: String(row[11] || '').trim() }
+    };
+  }
+  return curriculumObj;
+};
+
+const generateDescriptions = (ket, peng, mapelName, studentClass, curriculumData) => {
+  const defaultTemplate = 'Kompetensi dasar tercapai dengan baik';
+  const ketVal = parseFloat(String(ket || '').replace(',', '.'));
+  const pengVal = parseFloat(String(peng || '').replace(',', '.'));
+  const currMapel = curriculumData[mapelName];
+  let classKey = 'class_10';
+  if (studentClass && String(studentClass).includes('11')) {
+    classKey = 'class_11';
+  } else if (studentClass && String(studentClass).includes('12')) {
+    classKey = 'class_12';
+  }
+  const tp = currMapel?.[classKey];
+  let tp1Text = tp?.tp1 || '';
+  let tp2Text = tp?.tp2 || '';
+  if (!tp1Text && !tp2Text) return { row1: defaultTemplate, row2: '' };
+  if (isNaN(ketVal) || isNaN(pengVal)) return { row1: defaultTemplate, row2: '' };
+  if (ketVal > pengVal) return {
+    row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
+    row2: `Perlu peningkatan dalam ${tp2Text}`
+  };
+  if (pengVal > ketVal) return {
+    row1: `Mencapai kompetensi dengan baik dalam ${tp2Text}`,
+    row2: `Perlu peningkatan dalam ${tp1Text}`
+  };
+  return {
+    row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
+    row2: `Perlu peningkatan dalam ${tp2Text}`
+  };
+};
 
 const RaporApp = () => {
   const [students, setStudents] = useState([]);
@@ -18,42 +162,6 @@ const RaporApp = () => {
   const [competencyFontSize, setCompetencyFontSize] = useState(10);
   const [workbook, setWorkbook] = useState(null);
 
-  // Daftar mata pelajaran wajib
-  const requiredSubjects = [
-    'Pendidikan Agama Islam',
-    'Pendidikan Pancasila dan Kewarganegaraan',
-    'Bahasa Indonesia',
-    'Matematika',
-    'Sejarah Indonesia',
-    'Bahasa Inggris',
-    'Pendidikan Jasmani Olahraga dan Kesehatan',
-    'Seni Budaya',
-    'Teknologi Informasi dan Komunikasi',
-    'Informatika',
-    'Prakarya dan Kewirausahaan',
-    'Bahasa Daerah/Jawa',
-    'Aswaja',
-    'Fisika',
-    'Kimia',
-    'Biologi'
-  ];
-
-  // Daftar mata pelajaran pilihan
-  const electiveSubjects = [
-    'Sejarah/Sejarah Peminatan',
-    'Geografi',
-    'Sosiologi',
-    'Ekonomi',
-    'Ekonomi Akuntansi',
-    'Antropologi',
-    'Bahasa dan Sastra Arab',
-    'Bahasa dan Sastra Indonesia',
-    'Bahasa dan Sastra Inggris',
-    'Bahasa Indonesia Tingkat Lanjut',
-    'Bahasa Inggris Tingkat Lanjut',
-    'Keterampilan Bahasa Inggris'
-  ];
-
   // Handle window resize for responsive behavior
   useEffect(() => {
     const handleResize = () => {
@@ -63,205 +171,7 @@ const RaporApp = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // List of all subject names (for dynamic column matching)
-  const allSubjectNames = [
-    'Pendidikan Agama Islam',
-    'Pendidikan Pancasila dan Kewarganegaraan',
-    'Bahasa Indonesia',
-    'Matematika',
-    'Sejarah Indonesia',
-    'Bahasa Inggris',
-    'Pendidikan Jasmani Olahraga dan Kesehatan',
-    'Seni Budaya',
-    'Teknologi Informasi dan Komunikasi',
-    'Informatika',
-    'Prakarya dan Kewirausahaan',
-    'Bahasa Daerah/Jawa',
-    'Aswaja',
-    'Fisika',
-    'Kimia',
-    'Biologi',
-    'Sejarah/Sejarah Peminatan',
-    'Geografi',
-    'Sosiologi',
-    'Ekonomi',
-    'Ekonomi Akuntansi',
-    'Antropologi',
-    'Bahasa dan Sastra Arab',
-    'Bahasa dan Sastra Indonesia',
-    'Bahasa dan Sastra Inggris',
-    'Bahasa Indonesia Tingkat Lanjut',
-    'Bahasa Inggris Tingkat Lanjut',
-    'Keterampilan Bahasa Inggris'
-  ];
-
-  // Function to find subject columns dynamically from header
-  const findSubjectColumns = (headerRow) => {
-    const subjectColumns = {};
-
-    // Trim and lowercase header for comparison
-    const trimmedHeader = headerRow.map(h =>
-      h ? String(h).trim().toLowerCase() : ''
-    );
-
-    allSubjectNames.forEach(subjectName => {
-      const subjectLower = subjectName.toLowerCase();
-      let foundIndex = -1;
-
-      // Find the column index that contains the subject name
-      for (let i = 0; i < trimmedHeader.length; i++) {
-        if (trimmedHeader[i] === subjectLower) {
-          foundIndex = i;
-          break;
-        }
-      }
-
-      if (foundIndex !== -1) {
-        subjectColumns[subjectName] = {
-          ketIndex: foundIndex,
-          pengIndex: foundIndex + 1
-        };
-      }
-    });
-
-    return subjectColumns;
-  };
-
-  // Function to validate header and identify unrecognized subjects
-  const validateHeaderRow = (headerRow) => {
-    const trimmedHeader = headerRow.map(h =>
-      h ? String(h).trim().toLowerCase() : ''
-    );
-
-    const recognizedSubjects = [];
-    const unrecognizedSubjects = new Set();
-
-    // Check recognized subjects
-    allSubjectNames.forEach(subjectName => {
-      if (trimmedHeader.includes(subjectName.toLowerCase())) {
-        recognizedSubjects.push(subjectName);
-      }
-    });
-
-    // Check for unrecognized subjects (exclude system columns)
-    const systemColumns = [
-      'no', 'nis', 'nama', 'rata-rata', 'keterangan', 'sakit', 'izin', 'tanpa',
-      'kepala', 'wali', 'kelas', 'sekolah', 'fase', 'semester', 'tahun', 'tempat', 'tanggal', 'pramuka', 'pmr',
-      'deskripsi kokurikuler', 'ekstrakurikuler', 'ketidakhadiran', 'catatan wali kelas'
-    ];
-
-    trimmedHeader.forEach((header) => {
-      if (header &&
-        !systemColumns.includes(header) &&
-        !recognizedSubjects.map(s => s.toLowerCase()).includes(header) &&
-        !header.match(/^(ket|peng|tp1|tp2|keterangan|ketakwaan|pengetahuan|target performa|kelompok)$/)) {
-        unrecognizedSubjects.add(header);
-      }
-    });
-
-    return {
-      recognizedSubjects,
-      unrecognizedSubjects: Array.from(unrecognizedSubjects)
-    };
-  };
-
-  // New function: Parse curriculum from Sheet 2
-  const parseKurikulum = (kurikulumData) => {
-    const curriculumObj = {};
-
-    // Start from row 2 (index 1) - skip header
-    for (let i = 1; i < kurikulumData.length; i++) {
-      const row = kurikulumData[i];
-      if (!row || !row[1]) break; // Stop if no mapel name
-
-      const mapelName = String(row[1] || '').trim();
-      if (!mapelName || mapelName === '') continue;
-
-      // Structure: Col 0=No, 1=Mapel, 2=Kelompok, 3=Kelas10, 4=TP1_10, 5=TP2_10, 6=Kelas11, 7=TP1_11, 8=TP2_11, 9=Kelas12, 10=TP1_12, 11=TP2_12
-      curriculumObj[mapelName] = {
-        class_10: {
-          tp1: String(row[4] || '').trim(),
-          tp2: String(row[5] || '').trim()
-        },
-        class_11: {
-          tp1: String(row[7] || '').trim(),
-          tp2: String(row[8] || '').trim()
-        },
-        class_12: {
-          tp1: String(row[10] || '').trim(),
-          tp2: String(row[11] || '').trim()
-        }
-      };
-    }
-
-    return curriculumObj;
-  };
-
-  // New function: Generate descriptions based on KET vs PENG comparison
-  const generateDescriptions = (ket, peng, mapelName, studentClass, curriculumData) => {
-    const defaultTemplate = 'Kompetensi dasar tercapai dengan baik';
-
-    // Parse values
-    const ketVal = parseFloat(String(ket || '').replace(',', '.'));
-    const pengVal = parseFloat(String(peng || '').replace(',', '.'));
-
-    // Get curriculum data for the subject and class - use parameter instead of state
-    const currMapel = curriculumData[mapelName];
-    let classKey = 'class_10'; // Default
-
-    if (studentClass && String(studentClass).includes('11')) {
-      classKey = 'class_11';
-    } else if (studentClass && String(studentClass).includes('12')) {
-      classKey = 'class_12';
-    }
-
-    const tp = currMapel?.[classKey];
-    let tp1Text = tp?.tp1 || '';
-    let tp2Text = tp?.tp2 || '';
-
-    // Debug log
-    console.log(`generateDescriptions: mapel=${mapelName}, class=${classKey}, tp1=${tp1Text}, tp2=${tp2Text}, ket=${ketVal}, peng=${pengVal}`);
-
-    // If no curriculum data, use defaults
-    if (!tp1Text && !tp2Text) {
-      return {
-        row1: defaultTemplate,
-        row2: ''
-      };
-    }
-
-    // If either value is invalid, use default
-    if (isNaN(ketVal) || isNaN(pengVal)) {
-      return {
-        row1: defaultTemplate,
-        row2: ''
-      };
-    }
-
-    // Compare values
-    if (ketVal > pengVal) {
-      // KET > PENG: tp1 with "Mencapai kompetensi..." prefix
-      return {
-        row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
-        row2: `Perlu peningkatan dalam ${tp2Text}`
-      };
-    } else if (pengVal > ketVal) {
-      // PENG > KET: tp2 with "Mencapai kompetensi..." prefix (nilai lebih tinggi)
-      return {
-        row1: `Mencapai kompetensi dengan baik dalam ${tp2Text}`,
-        row2: `Perlu peningkatan dalam ${tp1Text}`
-      };
-    } else {
-      // Equal: TP1 is considered higher (better), TP2 is lower
-      return {
-        row1: `Mencapai kompetensi dengan baik dalam ${tp1Text}`,
-        row2: `Perlu peningkatan dalam ${tp2Text}`
-      };
-    }
-  };
-
-
-  const processWorkbookData = (workbook, customClassSheet = null) => {
+  const processWorkbookData = useCallback((workbook, customClassSheet = null) => {
     const sheetNames = workbook.SheetNames;
     console.log('Available sheets:', sheetNames);
 
@@ -453,7 +363,7 @@ const RaporApp = () => {
       parsedCurriculum,
       headerValidation
     };
-  };
+  }, []);
 
   const handleFetchSpreadsheet = async () => {
     setIsFetching(true);
@@ -516,7 +426,7 @@ const RaporApp = () => {
         console.error('Error switching sheet:', error);
       }
     }
-  }, [selectedClassSheet, workbook, isSheetsLoaded]);
+  }, [selectedClassSheet, workbook, isSheetsLoaded, processWorkbookData]);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -560,15 +470,7 @@ const RaporApp = () => {
     }
   };
 
-  const calculateAverage = (ket, peng) => {
-    const ketVal = parseFloat(String(ket).replace(',', '.'));
-    const pengVal = parseFloat(String(peng).replace(',', '.'));
 
-    if (isNaN(ketVal) || isNaN(pengVal)) return '-';
-
-    const avg = (ketVal + pengVal) / 2;
-    return avg.toFixed(2);
-  };
 
   // Function to get subjects that have at least one student with a value
   const getSubjectsWithValues = () => {
@@ -1372,7 +1274,7 @@ const RaporApp = () => {
           </div>
         )}
       </div>
-    </div >
+    </div>
   );
 };
 
