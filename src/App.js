@@ -1047,7 +1047,7 @@ const RaporApp = () => {
                       <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
                         <Upload size={16} /> 1. Upload Excel
                       </h2>
-                      <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-medium w-full justify-center">
+                      <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-bold w-full justify-center shadow-sm">
                         <Upload size={16} />
                         Pilih File
                         <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
@@ -1064,9 +1064,10 @@ const RaporApp = () => {
                         <button
                           onClick={handleFetchSpreadsheet}
                           disabled={isFetching}
-                          className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-xs font-medium`}
+                          className={`flex items-center justify-center gap-2 px-3 py-1.5 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
                         >
-                          {isFetching ? 'Loading...' : 'Tarik Data Terbaru'}
+                          <FileSpreadsheet size={14} />
+                          {isFetching ? 'Loading...' : 'Tarik Data'}
                         </button>
                         <select
                           value={selectedClassSheet}
@@ -1098,13 +1099,13 @@ const RaporApp = () => {
                       <div className="flex flex-col gap-1">
                         <button
                           onClick={() => setLayoutType('kelas10')}
-                          className={`w-full py-2 rounded text-xs font-medium transition ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                          className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                         >
                           Kelas 10
                         </button>
                         <button
                           onClick={() => setLayoutType('kelas1112')}
-                          className={`w-full py-2 rounded text-xs font-medium transition ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                          className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                         >
                           Kelas 11/12
                         </button>
@@ -1135,21 +1136,21 @@ const RaporApp = () => {
                           <div className="flex flex-col gap-2">
                             <button
                               onClick={() => setViewMode('single')}
-                              className={`w-full py-2 rounded text-xs font-bold transition ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                              className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                             >
                               Lihat 1 Siswa
                             </button>
                             <button
                               onClick={() => setViewMode('all')}
-                              className={`w-full py-2 rounded text-xs font-bold transition ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                              className={`w-full py-1.5 rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
                             >
                               Lihat Semua
                             </button>
                             <button
                               onClick={handlePrint}
-                              className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-2 text-xs font-bold"
+                              className="w-full py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-2 text-[11px] font-bold shadow-sm"
                             >
-                              <Printer size={16} />
+                              <Printer size={14} />
                               Print
                             </button>
                           </div>
@@ -1185,8 +1186,8 @@ const RaporApp = () => {
                   <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
                     <Upload size={18} /> 1. Upload Excel
                   </h2>
-                  <label className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-xs font-medium w-full justify-center">
-                    <Upload size={16} />
+                  <label className="flex items-center gap-2 px-3 py-2.5 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-[13px] font-bold w-full justify-center shadow-sm">
+                    <Upload size={18} />
                     Pilih File
                     <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                   </label>
@@ -1202,9 +1203,10 @@ const RaporApp = () => {
                     <button
                       onClick={handleFetchSpreadsheet}
                       disabled={isFetching}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-xs font-medium`}
+                      className={`flex items-center justify-center gap-2 px-3 py-1.5 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
                     >
-                      {isFetching ? 'Loading...' : 'Tarik Data Terbaru'}
+                      <FileSpreadsheet size={14} />
+                      {isFetching ? 'Loading...' : 'Tarik Data'}
                     </button>
                     <select
                       value={selectedClassSheet}
@@ -1236,13 +1238,13 @@ const RaporApp = () => {
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => setLayoutType('kelas10')}
-                      className={`px-3 py-2 rounded text-xs font-medium transition w-full ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      className={`px-3 py-1.5 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                     >
                       Kelas 10
                     </button>
                     <button
                       onClick={() => setLayoutType('kelas1112')}
-                      className={`px-3 py-2 rounded text-xs font-medium transition w-full ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                      className={`px-3 py-1.5 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                     >
                       Kelas 11/12
                     </button>
@@ -1269,21 +1271,21 @@ const RaporApp = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => setViewMode('single')}
-                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        className={`flex-1 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                       >
                         Tampilkan 1 Siswa
                       </button>
                       <button
                         onClick={() => setViewMode('all')}
-                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                        className={`flex-1 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
                       >
                         Tampilkan Semua
                       </button>
                       <button
                         onClick={handlePrint}
-                        className="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-1 text-[11px] font-bold"
+                        className="flex-1 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-1 text-[10px] font-bold shadow-sm"
                       >
-                        <Printer size={16} />
+                        <Printer size={14} />
                         Cetak
                       </button>
                     </div>
