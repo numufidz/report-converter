@@ -42,38 +42,11 @@ Semua panduan terbaru telah disatukan di satu file utama untuk memudahkan Bapak:
 ---
 
 ### Folder Dokumentasi (`docs/`)
-- **[REKAP_PERBAIKAN.md](docs/REKAP_PERBAIKAN.md)**: Ringkasan teknis perbaikan terakhir (Font Size, Menu 1-5, PWA).
-- **[archive/](docs/archive/)**: Folder yang berisi arsip dokumentasi teknis versi lama.
+- **[PANDUAN_UTAMA.md](docs/PANDUAN_UTAMA.md)**: Panduan Lengkap & Terupdate untuk pengguna.
+- **[REKAP_PERBAIKAN.md](docs/REKAP_PERBAIKAN.md)**: Ringkasan teknis perbaikan terakhir.
 
-
----
-
-## 📂 Project Structure
-
-```
-rapor-app/
-├── src/
-│   ├── App.js              # Main component
-│   ├── App.css             # Styling
-│   ├── index.js            # Entry point
-│   └── ...
-├── public/
-│   ├── index.html
-│   └── ...
-├── docs/                   # Dokumentasi lengkap (12 file)
-│   ├── QUICK_ANSWER.md
-│   ├── COMPLETE_ANSWER_EDGE_CASES.md
-│   ├── DYNAMIC_COLUMN_MAPPING.md
-│   ├── EDGE_CASES_SUMMARY.md
-│   ├── EDGE_CASE_HANDLING_DETAILED.md
-│   ├── EDGE_CASE_VISUAL_FLOWS.md
-│   ├── EDGE_CASES_ANALYSIS.md
-│   ├── FAQ_EDGE_CASES.md
-│   ├── TESTING_DYNAMIC_COLUMNS.md
-│   ├── DOCUMENTATION_INDEX.md
-│   ├── SUMMARY_IMPLEMENTATION.md
-│   └── AGENT.md
-├── package.json
+### Panduan Developer
+- **[AGENT.md](AGENT.md)**: Panduan untuk AI Agent & Developer yang mengembangkan proyek ini.├── package.json
 ├── tailwind.config.js
 ├── postcss.config.js
 └── README.md               # File ini
@@ -161,16 +134,10 @@ No;NIS;Nama;Aswaja;Matematika;Bahasa Indonesia;...
 ## 🐛 Troubleshooting
 
 ### "Mapel tidak terdeteksi"
-→ Lihat: [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md)
+Pastikan nama kolom header di Excel sesuai dengan daftar mapel yang didukung (lihat bagian Mata Pelajaran di atas).
 
 ### "Nilai tampil dash (-)"
-→ Lihat: [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md#q1-apa-yang-terjadi-jika-kolom-nilai-kosong)
-
-### "Error saat upload file"
-→ Lihat: [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md#q12-data-siswa-tidak-muncul-setelah-upload-kenapa)
-
-### "Ingin test feature"
-→ Lihat: [TESTING_DYNAMIC_COLUMNS.md](docs/TESTING_DYNAMIC_COLUMNS.md)
+Ini terjadi jika kolom nilai kosong. Sistem sengaja menampilkan "-" agar layout tetap rapi.
 
 ---
 
@@ -179,31 +146,20 @@ No;NIS;Nama;Aswaja;Matematika;Bahasa Indonesia;...
 1. Buka Browser DevTools (F12)
 2. Buka Tab **Console**
 3. Lihat log messages untuk debug info
-4. Cari file dokumentasi terkait di folder `docs/`
 
 ---
 
 ## 📝 Catatan Pengembangan
 
-- **Terakhir Update:** 19 Desember 2025
+- **Terakhir Update:** 27 Desember 2025
 - **Status:** Production-Ready ✅
-- **Version:** 0.1.0
-- **Dokumentasi:** Lengkap (12 file di folder `docs/`)
+- **Version:** 0.2.0
 
 ---
 
 ## 📞 Support
 
-Jika ada pertanyaan atau issue:
-
-1. Buka file dokumentasi di folder `docs/`
-2. Cari jawaban di [FAQ_EDGE_CASES.md](docs/FAQ_EDGE_CASES.md)
-3. Lihat [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) untuk navigasi lengkap
-
----
-
-**Dokumentasi lengkap tersedia di folder [`docs/`](docs/)**  
-**Mulai dari: [QUICK_ANSWER.md](docs/QUICK_ANSWER.md) atau [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)**
+Jika ada pertanyaan atau issue, silakan rujuk ke **[PANDUAN_UTAMA.md](docs/PANDUAN_UTAMA.md)**.
 
 Happy coding! 🚀
 

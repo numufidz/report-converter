@@ -58,7 +58,19 @@ Memberikan kendali kepada pengguna untuk menyesuaikan ukuran teks pada kolom "Ca
 
 ---
 
-## 4. Perbaikan Teknis Lainnya
+## 4. Perbaikan Layout Tabel & Kebersihan Aset (Terbaru)
+
+### Perataan Header Tabel
+- Mengubah alignment header "**Kelompok Mata Pelajaran Wajib**" dan "**Kelompok Mata Pelajaran Pilihan**" menjadi **Rata Kiri** (`text-left`).
+- Ini memberikan tampilan yang lebih rapi dan konsisten dengan daftar mata pelajaran di bawahnya.
+
+### Pembersihan Aset Tidak Terpakai
+- Menghapus file logo default React (logo*.png) di root folder `public` yang tidak digunakan.
+- Aplikasi sekarang hanya memuat aset yang benar-benar diperlukan, menjaga struktur proyek tetap bersih.
+
+---
+
+## 5. Perbaikan Teknis Lainnya
 - Menghapus fungsi tidak terpakai untuk membersihkan build pada Netlify.
 - Sinkronisasi meta tags pada `index.html` dengan manifest PWA.
 - Penyesuaian proporsi tabel agar lebih presisi.

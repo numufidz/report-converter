@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, X } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, X, MessageCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Daftar mata pelajaran wajib
@@ -1236,13 +1236,61 @@ const RaporApp = () => {
         )}
 
         {students.length === 0 && (
-          <div className={`bg-white rounded-lg shadow p-6 text-center ${isMobile ? 'mt-4' : 'max-w-7xl mx-auto mt-8'}`}>
-            <FileSpreadsheet size={isMobile ? 48 : 64} className="mx-auto mb-4 text-gray-400" />
-            <h3 className={`font-bold mb-2 ${isMobile ? 'text-base' : 'text-xl'}`}>Belum Ada Data</h3>
-            <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>Silakan upload file Excel untuk mulai membuat rapor</p>
+          <div className={`bg-white rounded-lg shadow-lg p-8 text-center ${isMobile ? 'mx-4 mt-20' : 'max-w-4xl mx-auto mt-20'}`}>
+            <h3 className={`font-bold mb-8 ${isMobile ? 'text-xl' : 'text-3xl'} text-gray-800`}>Mulai Membuat Rapor</h3>
+
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 justify-center items-stretch`}>
+              {/* Option 1: Upload Excel */}
+              <label className="flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-blue-300 rounded-xl hover:bg-blue-50 cursor-pointer transition group bg-white">
+                <div className="bg-blue-100 p-4 rounded-full mb-4 group-hover:bg-blue-200 transition ring-4 ring-blue-50">
+                  <Upload size={isMobile ? 32 : 48} className="text-blue-600" />
+                </div>
+                <h4 className="font-bold text-gray-800 text-lg mb-2">Upload File Excel</h4>
+                <p className="text-sm text-gray-500 mb-6">Pilih file .xlsx dari perangkat Anda</p>
+                <span className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-sm w-full max-w-[200px]">Pilih File</span>
+                <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
+              </label>
+
+              {/* Separator - ATAU */}
+              <div className="flex items-center justify-center relative">
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 text-gray-500 font-bold text-xs z-10 ${isMobile ? 'my-4' : 'mx-2'}`}>
+                  ATAU
+                </div>
+                {/* Horizontal line for mobile, vertical for desktop? No, easier to just use the circle overlay if we want lines, but simple circle is clean enough or just text */}
+              </div>
+
+              {/* Option 2: Spreadsheet */}
+              <div
+                onClick={handleFetchSpreadsheet}
+                className="flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-green-300 rounded-xl hover:bg-green-50 cursor-pointer transition group bg-white"
+              >
+                <div className="bg-green-100 p-4 rounded-full mb-4 group-hover:bg-green-200 transition ring-4 ring-green-50">
+                  <FileSpreadsheet size={isMobile ? 32 : 48} className="text-green-600" />
+                </div>
+                <h4 className="font-bold text-gray-800 text-lg mb-2">Tarik Data Spreadsheet</h4>
+                <p className="text-sm text-gray-500 mb-6">Ambil data langsung dari Google Sheets</p>
+                <button
+                  disabled={isFetching}
+                  className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm w-full max-w-[200px] disabled:bg-gray-400"
+                >
+                  {isFetching ? 'Memuat...' : 'Tarik Data'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/6285731447357"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105 print:hidden"
+      >
+        <MessageCircle size={24} fill="white" className="text-green-500" />
+        <span className="font-bold">Tanya Admin</span>
+      </a>
     </div>
   );
 };
