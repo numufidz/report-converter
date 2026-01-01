@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, X, MessageCircle } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, X, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users, Settings } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Daftar mata pelajaran wajib
@@ -161,6 +161,8 @@ const RaporApp = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [competencyFontSize, setCompetencyFontSize] = useState(10);
   const [workbook, setWorkbook] = useState(null);
+  const [paperSize, setPaperSize] = useState('A4'); // 'A4' or 'F4'
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 
   // Handle window resize for responsive behavior
   useEffect(() => {
@@ -849,15 +851,24 @@ const RaporApp = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <div className="flex h-screen bg-gray-100 font-sans text-gray-900 overflow-hidden">
       <style>{`
         @media print {
           @page {
-            size: A4;
+            size: ${paperSize === 'F4' ? '215mm 330mm' : 'A4'};
             margin: 20mm;
           }
-          body { margin: 0; }
-          .print\\:hidden { display: none !important; }
+          body { margin: 0; background: white; }
+          
+          /* Reset layout for print - MUST be defined before hiding rules or have lower specificity */
+          .flex, .h-screen, .overflow-hidden { 
+            display: block !important; 
+            height: auto !important; 
+            overflow: visible !important; 
+          }
+          
+          /* Hiding rules - Must come AFTER reset rules to override them */
+          .print\\:hidden, aside, header { display: none !important; }
           .page-break { page-break-after: always; }
           
           /* Table header repeat on every page */
@@ -874,6 +885,7 @@ const RaporApp = () => {
           /* Hilangkan garis antara baris TP1 dan TP2 dalam satu mapel */
           .tp1-cell { border-bottom: none !important; }
           .tp2-cell { border-top: none !important; }
+          
           /* Container untuk RaporPage1 bisa melanjut ke page 2 */
           .rapor-page-1 { 
             page-break-after: auto; 
@@ -884,401 +896,302 @@ const RaporApp = () => {
             margin-bottom: 0 !important;
           }
         }
+        
+        /* Custom Scrollbar for Sidebar */
+        .sidebar-scroll::-webkit-scrollbar {
+          width: 5px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+          background: #2d3748; 
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+          background: #4a5568; 
+          border-radius: 5px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background: #718096; 
+        }
       `}</style>
 
-      {/* Control Panel - Hidden saat print */}
-      <div className="bg-white border-b border-gray-200 print:hidden sticky top-0 z-50">
-        {/* Mobile Header */}
-        {isMobile && (
-          <div className="flex items-center justify-between p-3 bg-blue-600 text-white">
-            <h1 className="text-sm font-bold">APLIKASI RAPOR KURMER - EDISI REVISI 2025</h1>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1 hover:bg-blue-700 rounded"
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar (AdminLTE Style) */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-[#343a40] text-gray-400 flex flex-col transition-transform duration-300 ease-in-out shadow-xl ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:hidden'
+          } print:hidden`}
+      >
+        {/* Brand Logo */}
+        <div className="h-14 flex items-center px-4 bg-[#343a40] border-b border-gray-700 shrink-0">
+          <FileText className="text-blue-500 mr-2" size={20} />
+          <span className="text-lg font-semibold text-gray-200 tracking-wide">Converter Rapor <span className="text-[10px] font-normal text-gray-500 bg-gray-800 px-1 rounded ml-1">v2.0</span></span>
+        </div>
+
+        {/* User Info (Optional) */}
+        {students.length > 0 && (
+          <div className="p-4 border-b border-gray-700 bg-[#394046]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+                {students.length}
+              </div>
+              <div>
+                <div className="text-xs text-white font-semibold">Data Siswa Aktif</div>
+                <div className="text-[10px] text-green-400 animate-pulse">● Online Mode</div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Desktop Header */}
-        {!isMobile && (
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <h1 className="text-lg font-bold text-gray-800">APLIKASI RAPOR KURMER - EDISI REVISI 2025</h1>
-          </div>
-        )}
+        {/* Sidebar Menu */}
+        <div className="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-6">
 
-        {/* Content - Collapsible on mobile */}
-        {(!isMobile || mobileMenuOpen) && (
-          <div className={isMobile ? 'p-3 border-t border-gray-200 space-y-3' : 'max-w-7xl mx-auto px-4 py-4'}>
-            {isMobile ? (
-              // Mobile: Two-column layout (Upload & Student Selection left, View/Print controls right)
-              <>
-                {/* Sidebar Menu Sections - 2 Columns */}
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Column 1: Section 1, 2, 3 */}
-                  <div className="flex flex-col gap-2">
-                    {/* Section 1: Upload */}
-                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                        <Upload size={16} /> 1. Upload Excel
-                      </h2>
-                      <label className="flex items-center justify-center gap-2 px-3 h-[36px] bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-[11px] font-bold w-full shadow-sm">
-                        <Upload size={14} />
-                        Pilih File
-                        <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
-                      </label>
-                      {students.length > 0 && <p className="mt-2 text-green-600 text-[10px] font-medium italic">✓ {students.length} siswa aktif</p>}
-                    </div>
+          {/* Group 1: Data Source */}
+          <div>
+            <p className="px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">OPSI DATA SOURCE</p>
+            <div className="space-y-1">
+              {/* Upload Excel */}
+              <div className="relative group">
+                <label className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors text-sm">
+                  <Upload size={16} className={`text-blue-400`} />
+                  <span className="text-gray-300 group-hover:text-white">Upload Excel</span>
+                  <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
+                </label>
+              </div>
 
-                    {/* Section 2: Spreadsheet (CLOUD) */}
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                        <FileSpreadsheet size={16} /> 2. Spreadsheet
-                      </h2>
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={handleFetchSpreadsheet}
-                          disabled={isFetching}
-                          className={`flex items-center justify-center gap-2 px-3 h-[36px] ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
-                        >
-                          <FileSpreadsheet size={14} />
-                          {isFetching ? 'Loading...' : 'Tarik Data'}
-                        </button>
-                        <select
-                          value={selectedClassSheet}
-                          onChange={(e) => setSelectedClassSheet(e.target.value)}
-                          disabled={!isSheetsLoaded}
-                          className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 h-[36px] text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
-                        >
-                          {!isSheetsLoaded && <option value="">Pilih Kelas (Tarik Data dulu)</option>}
-                          {availableSheets.map(cls => (
-                            <option key={cls} value={cls}>Kelas {cls}</option>
-                          ))}
-                        </select>
-                        <a
-                          href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-center text-blue-600 hover:underline text-[10px] font-medium"
-                        >
-                          Buka Spreadsheet ↗
-                        </a>
-                      </div>
-                    </div>
+              {/* Spreadsheet */}
+              <div className="space-y-1">
+                <button
+                  onClick={handleFetchSpreadsheet}
+                  disabled={isFetching}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 transition-colors text-sm text-left group ${isFetching ? 'opacity-50' : ''}`}
+                >
+                  <FileSpreadsheet size={16} className="text-green-400" />
+                  <span className="text-gray-300 group-hover:text-white">{isFetching ? 'Loading...' : 'Google Sheets'}</span>
+                </button>
 
-                    {/* Section 3: Layout Selection */}
-                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                        <Menu size={16} /> 3. Pilih Layout
-                      </h2>
-                      <div className="flex flex-col gap-1">
-                        <button
-                          onClick={() => setLayoutType('kelas10')}
-                          className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                        >
-                          Kelas 10
-                        </button>
-                        <button
-                          onClick={() => setLayoutType('kelas1112')}
-                          className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                        >
-                          Kelas 11/12
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                {/* Class Selector */}
+                <div className="ml-9 pr-2">
+                  <select
+                    value={selectedClassSheet}
+                    onChange={(e) => setSelectedClassSheet(e.target.value)}
+                    disabled={!isSheetsLoaded}
+                    className="w-full bg-[#2c3136] border border-gray-600 text-gray-300 text-[11px] rounded px-2 py-1 focus:outline-none focus:border-blue-500 transition-colors"
+                  >
+                    {!isSheetsLoaded && <option value="">Pilih Kelas...</option>}
+                    {availableSheets.map(cls => (
+                      <option key={cls} value={cls}>Kelas {cls}</option>
+                    ))}
+                  </select>
 
-                  {/* Column 2: Section 4, 5 */}
-                  <div className="flex flex-col gap-2">
-                    {students.length > 0 && (
-                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex-1">
-                        <h2 className="font-bold mb-2 flex items-center gap-2 text-blue-700 text-xs">
-                          <Menu size={16} /> 4. Pilih Siswa
-                        </h2>
-                        <div className="flex flex-col gap-2">
-                          <select
-                            className="w-full border border-gray-300 rounded px-2 h-[36px] focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-                            onChange={(e) => {
-                              setSelectedStudent(students[e.target.value]);
-                              setViewMode('single');
-                            }}
-                          >
-                            {students.map((student, index) => (
-                              <option key={index} value={index}>{student.Nama} ({student.NIS})</option>
-                            ))}
-                          </select>
-
-                          <div className="flex flex-col gap-2">
-                            <button
-                              onClick={() => setViewMode('single')}
-                              className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                            >
-                              Lihat 1 Siswa
-                            </button>
-                            <button
-                              onClick={() => setViewMode('all')}
-                              className={`w-full h-[36px] rounded text-[11px] font-bold transition shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-                            >
-                              Lihat Semua
-                            </button>
-                            <button
-                              onClick={handlePrint}
-                              className="w-full h-[36px] bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-2 text-[11px] font-bold shadow-sm"
-                            >
-                              <Printer size={14} />
-                              Print
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Section 5: Font Size Control (Mobile) */}
-                    <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                      <h2 className="font-bold mb-2 flex items-center gap-2 text-orange-700 text-xs">
-                        <Menu size={16} /> 5. Ukuran Font
-                      </h2>
-                      <div className="flex items-center justify-between gap-1 bg-white p-1 rounded border border-orange-200">
-                        <button
-                          onClick={() => setCompetencyFontSize(Math.max(8, competencyFontSize - 1))}
-                          className="w-10 h-[36px] flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold transition"
-                        > - </button>
-                        <div className="flex flex-col items-center">
-                          <span className="text-[9px] text-gray-500 font-medium leading-none mb-1">Font Deskripsi</span>
-                          <span className="text-sm font-bold">{competencyFontSize}px</span>
-                        </div>
-                        <button
-                          onClick={() => setCompetencyFontSize(Math.min(14, competencyFontSize + 1))}
-                          className="w-10 h-[36px] flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold transition"
-                        > + </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              // Desktop: Five-column layout
-              <div className="gap-4" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1.1fr)' }}>
-                {/* Column 1: Upload Section */}
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
-                    <Upload size={18} /> 1. Upload Excel
-                  </h2>
-                  <label className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition text-[11px] font-bold w-full shadow-sm">
-                    <Upload size={14} />
-                    Pilih File
-                    <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
-                  </label>
-                  {students.length > 0 && <p className="mt-2 text-green-600 text-[10px] font-medium italic">✓ {students.length} siswa aktif</p>}
-                </div>
-
-                {/* Column 2: Spreadsheet Section (CLOUD) */}
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
-                    <FileSpreadsheet size={18} /> 2. Spreadsheet
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={handleFetchSpreadsheet}
-                      disabled={isFetching}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 ${isFetching ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white rounded transition text-[11px] font-bold shadow-sm`}
-                    >
-                      <FileSpreadsheet size={14} />
-                      {isFetching ? 'Loading...' : 'Tarik Data'}
-                    </button>
-                    <select
-                      value={selectedClassSheet}
-                      onChange={(e) => setSelectedClassSheet(e.target.value)}
-                      disabled={!isSheetsLoaded}
-                      className={`w-full border ${isSheetsLoaded ? 'border-blue-300' : 'bg-gray-100 border-gray-200'} rounded px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition`}
-                    >
-                      {!isSheetsLoaded && <option value="">Pilih Kelas (Tarik Data dulu)</option>}
-                      {availableSheets.map(cls => (
-                        <option key={cls} value={cls}>Kelas {cls}</option>
-                      ))}
-                    </select>
-                    <a
-                      href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-center text-blue-600 hover:underline text-[10px] font-medium"
-                    >
-                      Buka Spreadsheet ↗
-                    </a>
-                  </div>
-                </div>
-
-                {/* Column 3: Layout Selection */}
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
-                    <Menu size={18} /> 3. Pilih Layout
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => setLayoutType('kelas10')}
-                      className={`px-3 py-2 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas10' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                    >
-                      Kelas 10
-                    </button>
-                    <button
-                      onClick={() => setLayoutType('kelas1112')}
-                      className={`px-3 py-2 rounded text-[11px] font-bold transition w-full shadow-sm ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                    >
-                      Kelas 11/12
-                    </button>
-                  </div>
-                </div>
-
-                {/* Column 4: Student Selection */}
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <h2 className="font-bold mb-3 flex items-center gap-2 text-blue-700 text-sm">
-                    <Menu size={18} /> 4. Pilih Siswa
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    <select
-                      className="w-full border border-gray-300 rounded px-2 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      onChange={(e) => {
-                        setSelectedStudent(students[e.target.value]);
-                        setViewMode('single');
-                      }}
-                    >
-                      {students.map((student, index) => (
-                        <option key={index} value={index}>{student.Nama} ({student.NIS})</option>
-                      ))}
-                    </select>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setViewMode('single')}
-                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'single' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Tampilkan 1 Siswa
-                      </button>
-                      <button
-                        onClick={() => setViewMode('all')}
-                        className={`flex-1 py-2 rounded text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-sm ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                      >
-                        Tampilkan Semua
-                      </button>
-                      <button
-                        onClick={handlePrint}
-                        className="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center justify-center gap-1 text-[11px] font-bold shadow-sm"
-                      >
-                        <Printer size={14} />
-                        Cetak
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Column 5: Font Size Selection */}
-                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                  <h2 className="font-bold mb-3 flex items-center gap-2 text-orange-700 text-sm">
-                    <Menu size={18} /> 5. Ukuran Font
-                  </h2>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between bg-white px-2 py-1.5 rounded border border-orange-200">
-                      <button
-                        onClick={() => setCompetencyFontSize(Math.max(8, competencyFontSize - 1))}
-                        className="w-10 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold text-gray-800 transition"
-                      >
-                        -
-                      </button>
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-gray-500 font-medium">Font Deskripsi</span>
-                        <span className="text-sm font-bold text-orange-700">{competencyFontSize}px</span>
-                      </div>
-                      <button
-                        onClick={() => setCompetencyFontSize(Math.min(14, competencyFontSize + 1))}
-                        className="w-10 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 font-bold text-gray-800 transition"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <p className="text-[9px] text-orange-600 text-center italic">Atur besar teks capaian kompetensi</p>
-                  </div>
+                  {/* Buka Spreadsheet Link */}
+                  <a
+                    href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block mt-1 text-[10px] text-blue-400 hover:text-blue-300 hover:underline text-right"
+                  >
+                    Buka Spreadsheet ↗
+                  </a>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Group 2: Konfigurasi */}
+          <div>
+            <p className="px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Konfigurasi Rapor</p>
+            <div className="space-y-4 px-2">
+              {/* Layout Type */}
+              <div>
+                <div className="flex items-center gap-2 mb-1 text-gray-400">
+                  <Layout size={14} /> <span className="text-xs">Layout</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1 bg-black/20 p-1 rounded border border-white/5">
+                  <button onClick={() => setLayoutType('kelas10')} className={`text-[10px] py-1 rounded transition-colors ${layoutType === 'kelas10' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}>Kelas 10</button>
+                  <button onClick={() => setLayoutType('kelas1112')} className={`text-[10px] py-1 rounded transition-colors ${layoutType === 'kelas1112' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}>11 / 12</button>
+                </div>
+              </div>
+
+              {/* Paper Size */}
+              <div>
+                <div className="flex items-center gap-2 mb-1 text-gray-400">
+                  <FileText size={14} /> <span className="text-xs">Ukuran Kertas</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1 bg-black/20 p-1 rounded border border-white/5">
+                  <button onClick={() => setPaperSize('A4')} className={`text-[10px] py-1 rounded transition-colors ${paperSize === 'A4' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}>A4</button>
+                  <button onClick={() => setPaperSize('F4')} className={`text-[10px] py-1 rounded transition-colors ${paperSize === 'F4' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-300'}`}>F4</button>
+                </div>
+              </div>
+
+              {/* Font Size */}
+              <div>
+                <div className="flex items-center gap-2 mb-1 text-gray-400">
+                  <Type size={14} /> <span className="text-xs">Font Deskripsi</span>
+                </div>
+                <div className="flex items-center gap-2 bg-black/20 p-1 rounded border border-white/5">
+                  <button onClick={() => setCompetencyFontSize(Math.max(8, competencyFontSize - 1))} className="w-6 h-6 bg-white/5 rounded hover:bg-white/20 flex items-center justify-center text-gray-400 hover:text-white">-</button>
+                  <span className="flex-1 text-center font-bold text-xs text-white">{competencyFontSize}px</span>
+                  <button onClick={() => setCompetencyFontSize(Math.min(14, competencyFontSize + 1))} className="w-6 h-6 bg-white/5 rounded hover:bg-white/20 flex items-center justify-center text-gray-400 hover:text-white">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Group 3: Cetak */}
+          <div className="pt-2">
+            <button
+              onClick={handlePrint}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white py-2.5 rounded shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
+            >
+              <Printer size={16} /> <span className="font-bold text-sm">Cetak Rapor</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Footer Sidebar */}
+        <div className="p-3 text-[10px] text-gray-600 text-center border-t border-gray-700 bg-[#2f353a]">
+          &copy; 2026 M.M.Tech
+        </div>
+      </aside>
+
+      {/* Main Content Wrapper */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-gray-100 transition-all duration-300">
+
+        {/* Top Navbar */}
+        <header className="h-14 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-4 shrink-0 print:hidden z-30 relative">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
+            >
+              <Menu size={20} />
+            </button>
+
+            {/* Page Title / Breadcrumb */}
+            <div className="flex flex-col">
+              <h1 className="font-bold text-gray-800 text-sm md:text-base leading-tight flex items-center gap-2">
+                Preview Rapor
+                {students.length > 0 && <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800">
+                  {students.length} Siswa
+                </span>}
+              </h1>
+            </div>
+          </div>
+
+          {/* Right Side Tools */}
+          <div className="flex items-center gap-3">
+            {/* Only show if students exist */}
+            {students.length > 0 && (
+              <>
+                {/* Student Selector */}
+                <div className="hidden md:flex items-center bg-gray-50 border border-gray-200 rounded-md px-2 hover:border-blue-300 transition-colors">
+                  <Users size={14} className="text-gray-400 mr-2" />
+                  <select
+                    className="bg-transparent border-none text-xs md:text-sm py-1.5 w-48 focus:ring-0 cursor-pointer text-gray-700 font-medium focus:outline-none"
+                    onChange={(e) => {
+                      setSelectedStudent(students[e.target.value]);
+                      setViewMode('single');
+                    }}
+                    value={selectedStudent ? students.findIndex(s => s.Nama === selectedStudent.Nama) : 0}
+                  >
+                    {students.map((student, index) => (
+                      <option key={index} value={index}>{student.Nama}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Prev/Next Navigation (Simple) */}
+                <div className="flex border border-gray-200 rounded-md overflow-hidden shadow-sm">
+                  <button
+                    onClick={() => {
+                      const currentIndex = selectedStudent ? students.findIndex(s => s.Nama === selectedStudent.Nama) : 0;
+                      const prevIndex = Math.max(0, currentIndex - 1);
+                      setSelectedStudent(students[prevIndex]);
+                      setViewMode('single');
+                    }}
+                    className="px-2 py-1.5 bg-white hover:bg-gray-50 border-r border-gray-200 text-gray-600"
+                    title="Siswa Sebelumnya"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const currentIndex = selectedStudent ? students.findIndex(s => s.Nama === selectedStudent.Nama) : 0;
+                      const nextIndex = Math.min(students.length - 1, currentIndex + 1);
+                      setSelectedStudent(students[nextIndex]);
+                      setViewMode('single');
+                    }}
+                    className="px-2 py-1.5 bg-white hover:bg-gray-50 text-gray-600"
+                    title="Siswa Berikutnya"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex bg-gray-100 p-1 rounded-md border border-gray-200">
+                  <button
+                    onClick={() => setViewMode('single')}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all ${viewMode === 'single' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Single
+                  </button>
+                  <button
+                    onClick={() => setViewMode('all')}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all ${viewMode === 'all' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    All
+                  </button>
+                </div>
+              </>
             )}
           </div>
-        )}
-      </div>
+        </header>
 
-      {/* Content Area */}
-      <div className={`${isMobile ? 'p-2' : 'p-4'} print:p-0`}>
-        {/* Rapor Display with Print Preview */}
-        {students.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 print:grid-cols-1">
-            {/* Main Rapor Display */}
-            <div className={`${isMobile ? 'space-y-2' : 'mx-auto space-y-0 w-full'} print:m-0 print:max-w-none`} style={!isMobile ? { maxWidth: '210mm' } : {}}>
+        {/* Content Area (Scrollable) */}
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-4 print:p-0 print:bg-white print:overflow-visible">
+          {students.length > 0 ? (
+            <div className={`mx-auto bg-white shadow-lg print:shadow-none min-h-[29.7cm] transition-all duration-300 max-w-[215mm] print:w-full print:max-w-none`}>
+              {/* View Logic */}
               {viewMode === 'single' ? (
-                // Single student view - show both pages
-                <>
+                <div className="p-8 print:p-0">
                   <RaporPage1 student={selectedStudent} layoutType={layoutType} />
-                </>
+                </div>
               ) : (
-                // All students view
-                <>
+                <div>
                   {students.map((student, index) => (
                     <div key={index} className={index < students.length - 1 ? "page-break" : ""}>
-                      <RaporPage1 student={student} layoutType={layoutType} />
+                      <div className="p-8 print:p-0">
+                        <RaporPage1 student={student} layoutType={layoutType} />
+                      </div>
                       {index < students.length - 1 && (
-                        <div className="border-t-4 border-double border-gray-400 py-3 my-2 text-center text-xs text-gray-500 font-semibold print:hidden">
-                          ═══════ SISWA BERIKUTNYA ═══════
+                        <div className="border-t-4 border-double border-gray-300 py-3 my-4 text-center text-xs text-gray-400 font-semibold print:hidden">
+                          ---- Halaman Berikutnya (Siswa: {students[index + 1]?.Nama}) ----
                         </div>
                       )}
                     </div>
                   ))}
-                </>
+                </div>
               )}
             </div>
-          </div>
-        )}
-
-        {students.length === 0 && (
-          <div className={`bg-white rounded-lg shadow-lg p-8 text-center ${isMobile ? 'mx-4 mt-20' : 'max-w-4xl mx-auto mt-20'}`}>
-            <h3 className={`font-bold mb-8 ${isMobile ? 'text-xl' : 'text-3xl'} text-gray-800`}>Mulai Membuat Rapor</h3>
-
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 justify-center items-stretch`}>
-              {/* Option 1: Upload Excel */}
-              <label className="flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-blue-300 rounded-xl hover:bg-blue-50 cursor-pointer transition group bg-white">
-                <div className="bg-blue-100 p-4 rounded-full mb-4 group-hover:bg-blue-200 transition ring-4 ring-blue-50">
-                  <Upload size={isMobile ? 32 : 48} className="text-blue-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-2">Upload File Excel</h4>
-                <p className="text-sm text-gray-500 mb-6">Pilih file .xlsx dari perangkat Anda</p>
-                <span className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-sm w-full max-w-[200px]">Pilih File</span>
-                <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
-              </label>
-
-              {/* Separator - ATAU */}
-              <div className="flex items-center justify-center relative">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 text-gray-500 font-bold text-xs z-10 ${isMobile ? 'my-4' : 'mx-2'}`}>
-                  ATAU
-                </div>
-                {/* Horizontal line for mobile, vertical for desktop? No, easier to just use the circle overlay if we want lines, but simple circle is clean enough or just text */}
+          ) : (
+            /* Empty State */
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400">
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-6">
+                <Upload size={40} className="text-gray-400" />
               </div>
+              <h3 className="text-xl font-bold text-gray-600 mb-2">Belum ada data rapor</h3>
+              <p className="max-w-md mx-auto mb-8">Silakan upload file Excel atau tarik data dari Spreadsheet melalui menu di sidebar sebelah kiri.</p>
 
-              {/* Option 2: Spreadsheet */}
-              <div
-                onClick={handleFetchSpreadsheet}
-                className="flex-1 flex flex-col items-center justify-center p-8 border-2 border-dashed border-green-300 rounded-xl hover:bg-green-50 cursor-pointer transition group bg-white"
-              >
-                <div className="bg-green-100 p-4 rounded-full mb-4 group-hover:bg-green-200 transition ring-4 ring-green-50">
-                  <FileSpreadsheet size={isMobile ? 32 : 48} className="text-green-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 text-lg mb-2">Tarik Data Spreadsheet</h4>
-                <p className="text-sm text-gray-500 mb-6">Ambil data langsung dari Google Sheets</p>
-                <button
-                  disabled={isFetching}
-                  className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm w-full max-w-[200px] disabled:bg-gray-400"
-                >
-                  {isFetching ? 'Memuat...' : 'Tarik Data'}
-                </button>
-              </div>
+              {/* Quick Actions removed as per request */}
             </div>
-          </div>
-        )}
+          )}
+        </main>
       </div>
 
       {/* Floating WhatsApp Button */}
@@ -1286,10 +1199,11 @@ const RaporApp = () => {
         href="https://wa.me/6285731447357"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105 print:hidden"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105 print:hidden border-2 border-white"
+        title="Hubungi Kami"
       >
-        <MessageCircle size={24} fill="white" className="text-green-500" />
-        <span className="font-bold">Tanya Admin</span>
+        <MessageCircle size={24} fill="white" className="text-[#25D366]" />
+        <span className="font-bold hidden md:inline">Tanya Admin</span>
       </a>
     </div>
   );
