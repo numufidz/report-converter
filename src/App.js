@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, X, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users, Settings } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Daftar mata pelajaran wajib
@@ -152,7 +152,7 @@ const RaporApp = () => {
   const [viewMode, setViewMode] = useState('single'); // 'single' or 'all'
   const [subjectOrder, setSubjectOrder] = useState([]); // Track subject order from file
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const [layoutType, setLayoutType] = useState('kelas10'); // 'kelas10' or 'kelas1112'
   const [spreadsheetId] = useState('1vNFphN9h2GPdVykILiHSLblilN8j7txN');
   const [selectedClassSheet, setSelectedClassSheet] = useState('');
