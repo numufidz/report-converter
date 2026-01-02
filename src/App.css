@@ -34,41 +34,36 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
 /* Mobile Friendly Styles */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   body {
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+    overflow-x: auto;
   }
 
   input[type="file"] {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
 
-  select, input, button {
-    font-size: 16px; /* Prevents zoom on iOS */
+  select,
+  input,
+  button {
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
 
   .page-break {
-    width: 100% !important;
     min-height: auto !important;
     page-break-after: always;
     margin-bottom: 1rem;
-  }
-
-  table {
-    font-size: 11px !important;
-    word-break: break-word;
-  }
-
-  table th, table td {
-    padding: 6px 4px !important;
   }
 }
 
@@ -103,6 +98,7 @@
   .category-header {
     page-break-after: avoid !important;
   }
+}
 
 /* ===== PRINT HEADER STYLES ===== */
 .print-header {

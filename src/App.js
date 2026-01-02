@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users, ZoomIn, ZoomOut, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Daftar mata pelajaran wajib
@@ -152,6 +152,7 @@ const RaporApp = () => {
   const [viewMode, setViewMode] = useState('single'); // 'single' or 'all'
   const [subjectOrder, setSubjectOrder] = useState([]); // Track subject order from file
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [zoomLevel, setZoomLevel] = useState(0.5); // Default zoom for mobile
 
   const [layoutType, setLayoutType] = useState('kelas10'); // 'kelas10' or 'kelas1112'
   const [spreadsheetId] = useState('1vNFphN9h2GPdVykILiHSLblilN8j7txN');
@@ -500,10 +501,7 @@ const RaporApp = () => {
       data: student?.subjects[subjectName]
     })).filter(s => s.data);
 
-    const pageStyle = isMobile ? {
-      padding: '12px',
-      fontSize: '11px'
-    } : {
+    const pageStyle = {
       padding: '0',
       fontSize: '12px'
     };
@@ -513,48 +511,66 @@ const RaporApp = () => {
         {/* Identitas Siswa */}
         <div className="mb-3 text-xs" style={{ display: 'grid', gridTemplateColumns: '60% 40%', gap: '12px' }}>
           <div>
-            <div className="flex mb-1">
-              <span className="font-semibold w-28">Nama</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.nama || student?.Nama || '-'}</span>
-            </div>
-            <div className="flex mb-1">
-              <span className="font-semibold w-28">NIS/NISN</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.nisn || student?.NIS || '-'}</span>
-            </div>
-            <div className="flex mb-1">
-              <span className="font-semibold w-28">Nama Sekolah</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.sekolah || 'SMA Mamba\'unnur'}</span>
-            </div>
-            <div className="flex">
-              <span className="font-semibold w-28">Alamat</span>
-              <span>:</span>
-              <span className="flex-1 ml-2 break-words">{student?.identitas?.alamat || '-'}</span>
-            </div>
+            <table className="w-full no-border-table" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '130px' }} />
+                <col style={{ width: '15px' }} />
+                <col style={{ width: 'auto' }} />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td className="font-semibold align-top pb-1">Nama</td>
+                  <td className="align-top pb-1">:</td>
+                  <td className="align-top pb-1">{student?.identitas?.nama || student?.Nama || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold align-top pb-1">NIS/NISN</td>
+                  <td className="align-top pb-1">:</td>
+                  <td className="align-top pb-1">{student?.identitas?.nisn || student?.NIS || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold align-top pb-1">Nama Sekolah</td>
+                  <td className="align-top pb-1">:</td>
+                  <td className="align-top pb-1">{student?.identitas?.sekolah || 'SMA Mamba\'unnur'}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold align-top">Alamat</td>
+                  <td className="align-top">:</td>
+                  <td className="align-top break-words">{student?.identitas?.alamat || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div>
-            <div className="flex mb-1">
-              <span className="font-semibold w-28">Kelas</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.kelas || 'X'}</span>
-            </div>
-            <div className="flex mb-1">
-              <span className="font-semibold w-28">Fase</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.fase || '-'}</span>
-            </div>
-            <div className="flex mb-1">
-              <span className="font-semibold w-28">Semester</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.semester || '1'}</span>
-            </div>
-            <div className="flex">
-              <span className="font-semibold w-28">Tahun Pelajaran</span>
-              <span>:</span>
-              <span className="flex-1 ml-2">{student?.identitas?.tahunAjaran || '2025/2026'}</span>
-            </div>
+            <table className="w-full no-border-table" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '130px' }} />
+                <col style={{ width: '15px' }} />
+                <col style={{ width: 'auto' }} />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td className="font-semibold align-top pb-1">Kelas</td>
+                  <td className="align-top pb-1">:</td>
+                  <td className="align-top pb-1">{student?.identitas?.kelas || 'X'}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold align-top pb-1">Fase</td>
+                  <td className="align-top pb-1">:</td>
+                  <td className="align-top pb-1">{student?.identitas?.fase || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold align-top pb-1">Semester</td>
+                  <td className="align-top pb-1">:</td>
+                  <td className="align-top pb-1">{student?.identitas?.semester || '1'}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold align-top">Tahun Pelajaran</td>
+                  <td className="align-top">:</td>
+                  <td className="align-top">{student?.identitas?.tahunAjaran || '2025/2026'}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -563,7 +579,7 @@ const RaporApp = () => {
 
         {/* Judul Laporan */}
         <div className="text-center mb-3 pb-2">
-          <h1 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>LAPORAN HASIL BELAJAR</h1>
+          <h1 className="font-bold text-lg">LAPORAN HASIL BELAJAR</h1>
         </div>
 
         {/* Tabel Nilai */}
@@ -578,10 +594,10 @@ const RaporApp = () => {
             </colgroup>
             <thead>
               <tr className="bg-gray-300">
-                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-                <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                <th className="border border-black px-2 py-1.5 text-center w-8">No.</th>
+                <th className="border border-black px-2 py-1.5 text-center">Mata Pelajaran</th>
+                <th className="border border-black px-2 py-1.5 text-center w-16">Nilai Akhir</th>
+                <th className="border border-black px-2 py-1.5 text-center">Capaian Kompetensi</th>
               </tr>
             </thead>
             <tbody>
@@ -592,9 +608,9 @@ const RaporApp = () => {
                 return (
                   <React.Fragment key={idx}>
                     <tr>
-                      <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
-                      <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{subject.name}</td>
-                      <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
+                      <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>{subject.name}</td>
+                      <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>
                         {subject.data?.avg || '-'}
                       </td>
                       <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: tp2 ? '0.1rem' : '0.1rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
@@ -626,10 +642,10 @@ const RaporApp = () => {
               </colgroup>
               <thead>
                 <tr className="bg-gray-300">
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                  <th className="border border-black px-2 py-1.5 text-center w-8">No.</th>
+                  <th className="border border-black px-2 py-1.5 text-center">Mata Pelajaran</th>
+                  <th className="border border-black px-2 py-1.5 text-center w-16">Nilai Akhir</th>
+                  <th className="border border-black px-2 py-1.5 text-center">Capaian Kompetensi</th>
                 </tr>
               </thead>
               <tbody>
@@ -645,9 +661,9 @@ const RaporApp = () => {
                     return (
                       <React.Fragment key={idx}>
                         <tr>
-                          <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
-                          <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{subject.name}</td>
-                          <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
+                          <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>{idx + 1}</td>
+                          <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>{subject.name}</td>
+                          <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>
                             {subject.data?.avg || '-'}
                           </td>
                           <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: tp2 ? '0.1rem' : '0.1rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
@@ -679,10 +695,10 @@ const RaporApp = () => {
               </colgroup>
               <thead>
                 <tr className="bg-gray-300">
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : 'w-8'}`}>No.</th>
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Mata Pelajaran</th>
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs w-12' : 'w-16'}`}>Nilai Akhir</th>
-                  <th className={`border border-black px-2 py-1.5 text-center ${isMobile ? 'text-xs' : ''}`}>Capaian Kompetensi</th>
+                  <th className="border border-black px-2 py-1.5 text-center w-8">No.</th>
+                  <th className="border border-black px-2 py-1.5 text-center">Mata Pelajaran</th>
+                  <th className="border border-black px-2 py-1.5 text-center w-16">Nilai Akhir</th>
+                  <th className="border border-black px-2 py-1.5 text-center">Capaian Kompetensi</th>
                 </tr>
               </thead>
               <tbody>
@@ -698,9 +714,9 @@ const RaporApp = () => {
                     return (
                       <React.Fragment key={idx}>
                         <tr>
-                          <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
-                          <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>{subject.name}</td>
-                          <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: isMobile ? '10px' : '12px' }}>
+                          <td className="border border-black px-2 py-1 text-center align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>{idx + 1}</td>
+                          <td className="border border-black px-2 py-1 align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>{subject.name}</td>
+                          <td className="border border-black px-2 py-1 text-center font-bold align-middle" rowSpan={tp2 ? 2 : 1} style={{ fontSize: '12px' }}>
                             {subject.data?.avg || '-'}
                           </td>
                           <td className={`border-t border-r border-l border-black px-1 ${tp2 ? 'tp1-cell' : ''}`} style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: tp2 ? '0.1rem' : '0.1rem', borderBottom: tp2 ? 'none' : '1px solid black' }}>
@@ -745,8 +761,8 @@ const RaporApp = () => {
                 <>
                   {student.ekstrakurikuler.map((ekskul, idx) => (
                     <tr key={idx}>
-                      <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>{idx + 1}</td>
-                      <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>{ekskul.nama}</td>
+                      <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: '12px' }}>{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: '12px' }}>{ekskul.nama}</td>
                       <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                         {ekskul.keterangan}
                       </td>
@@ -756,15 +772,15 @@ const RaporApp = () => {
               ) : (
                 <>
                   <tr>
-                    <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>1</td>
-                    <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>Pramuka</td>
+                    <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: '12px' }}>1</td>
+                    <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: '12px' }}>Pramuka</td>
                     <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                       Trampil dan disiplin dalam kegiatan kepramukaan
                     </td>
                   </tr>
                   <tr>
-                    <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>2</td>
-                    <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: isMobile ? '10px' : '12px' }}>PMR</td>
+                    <td className="border border-black px-2 py-1 text-center align-middle" style={{ fontSize: '12px' }}>2</td>
+                    <td className="border border-black px-2 py-1 align-middle" style={{ fontSize: '12px' }}>PMR</td>
                     <td className="border border-black px-1" style={{ fontSize: `${competencyFontSize}px`, lineHeight: '1.2', paddingTop: '0.1rem', paddingBottom: '0.1rem' }}>
                       Aktif remaja sehat peduli sesama dan kesehatan remaja
                     </td>
@@ -882,6 +898,9 @@ const RaporApp = () => {
             margin: 0;
             padding: inherit;
           }
+          /* Remove borders for identity tables */
+          .no-border-table td, .no-border-table th { border: none !important; }
+          
           /* Hilangkan garis antara baris TP1 dan TP2 dalam satu mapel */
           .tp1-cell { border-bottom: none !important; }
           .tp2-cell { border-top: none !important; }
@@ -891,9 +910,18 @@ const RaporApp = () => {
             page-break-after: auto; 
             box-sizing: border-box;
             width: 100%;
-            padding: 0;
+            padding: 0 !important;
+            font-size: 12px !important;
             box-shadow: none !important;
             margin-bottom: 0 !important;
+          }
+
+          /* Reset zoom for print */
+          .report-wrapper {
+            transform: none !important;
+            margin: 0 !important;
+            width: 100% !important;
+            min-width: unset !important;
           }
         }
         
@@ -916,7 +944,7 @@ const RaporApp = () => {
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity print:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -932,20 +960,6 @@ const RaporApp = () => {
           <span className="text-lg font-semibold text-gray-200 tracking-wide">Converter Rapor <span className="text-[10px] font-normal text-gray-500 bg-gray-800 px-1 rounded ml-1">v2.0</span></span>
         </div>
 
-        {/* User Info (Optional) */}
-        {students.length > 0 && (
-          <div className="p-4 border-b border-gray-700 bg-[#394046]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
-                {students.length}
-              </div>
-              <div>
-                <div className="text-xs text-white font-semibold">Data Siswa Aktif</div>
-                <div className="text-[10px] text-green-400 animate-pulse">● Online Mode</div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Sidebar Menu */}
         <div className="flex-1 overflow-y-auto sidebar-scroll p-3 space-y-6">
@@ -953,10 +967,10 @@ const RaporApp = () => {
           {/* Group 1: Data Source */}
           <div>
             <p className="px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">OPSI DATA SOURCE</p>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {/* Upload Excel */}
               <div className="relative group">
-                <label className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors text-sm">
+                <label className="flex items-center gap-3 px-3 h-[42px] rounded-md border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors text-sm shadow-sm">
                   <Upload size={16} className={`text-blue-400`} />
                   <span className="text-gray-300 group-hover:text-white">Upload Excel</span>
                   <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
@@ -964,11 +978,11 @@ const RaporApp = () => {
               </div>
 
               {/* Spreadsheet */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <button
                   onClick={handleFetchSpreadsheet}
                   disabled={isFetching}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 transition-colors text-sm text-left group ${isFetching ? 'opacity-50' : ''}`}
+                  className={`w-full flex items-center gap-3 px-3 h-[42px] rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition-colors text-sm text-left group shadow-sm ${isFetching ? 'opacity-50' : ''}`}
                 >
                   <FileSpreadsheet size={16} className="text-green-400" />
                   <span className="text-gray-300 group-hover:text-white">{isFetching ? 'Loading...' : 'Google Sheets'}</span>
@@ -988,14 +1002,15 @@ const RaporApp = () => {
                     ))}
                   </select>
 
-                  {/* Buka Spreadsheet Link */}
+                  {/* Buka Spreadsheet Button */}
                   <a
                     href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block mt-1 text-[10px] text-blue-400 hover:text-blue-300 hover:underline text-right"
+                    className="flex items-center justify-center gap-2 mt-2 w-full bg-[#2c3136] border border-white/10 hover:border-white/30 text-blue-400 hover:text-blue-300 text-[10px] rounded px-2 py-1.5 transition-all shadow-sm"
                   >
-                    Buka Spreadsheet ↗
+                    <span>Buka Spreadsheet</span>
+                    <span className="text-[8px]">↗</span>
                   </a>
                 </div>
               </div>
@@ -1046,10 +1061,21 @@ const RaporApp = () => {
           <div className="pt-2">
             <button
               onClick={handlePrint}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white py-2.5 rounded shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
+              className="w-full h-[42px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-md shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95"
             >
               <Printer size={16} /> <span className="font-bold text-sm">Cetak Rapor</span>
             </button>
+
+            {/* Tanya Admin Button */}
+            <a
+              href="https://wa.me/6285731447357"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center gap-3 px-3 h-[42px] rounded-md border border-white/10 bg-white/5 hover:bg-white/10 transition-colors text-sm group shadow-sm"
+            >
+              <MessageCircle size={16} className="text-[#25D366]" />
+              <span className="text-gray-300 group-hover:text-white">Tanya Admin</span>
+            </a>
           </div>
         </div>
 
@@ -1060,7 +1086,7 @@ const RaporApp = () => {
       </aside>
 
       {/* Main Content Wrapper */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-gray-100 transition-all duration-300">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-gray-100 transition-all duration-300 print:overflow-visible print:h-auto">
 
         {/* Top Navbar */}
         <header className="h-14 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-4 shrink-0 print:hidden z-30 relative">
@@ -1154,9 +1180,15 @@ const RaporApp = () => {
         </header>
 
         {/* Content Area (Scrollable) */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-4 print:p-0 print:bg-white print:overflow-visible">
+        <main className="flex-1 overflow-x-auto overflow-y-auto bg-gray-100 p-4 print:p-0 print:bg-white print:overflow-visible relative">
           {students.length > 0 ? (
-            <div className={`mx-auto bg-white shadow-lg print:shadow-none min-h-[29.7cm] transition-all duration-300 max-w-[215mm] print:w-full print:max-w-none`}>
+            <div
+              className={`report-wrapper mx-auto bg-white shadow-lg print:shadow-none min-h-[29.7cm] transition-all duration-300 w-[210mm] min-w-[210mm] print:w-full print:max-w-none origin-top`}
+              style={!isMobile ? {} : {
+                transform: `scale(${zoomLevel})`,
+                marginBottom: `-${(1 - zoomLevel) * 100}%` // Offset to reduce huge bottom gap when scaled down
+              }}
+            >
               {/* View Logic */}
               {viewMode === 'single' ? (
                 <div className="p-8 print:p-0">
@@ -1194,17 +1226,30 @@ const RaporApp = () => {
         </main>
       </div>
 
-      {/* Floating WhatsApp Button */}
-      <a
-        href="https://wa.me/6285731447357"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105 print:hidden border-2 border-white"
-        title="Hubungi Kami"
-      >
-        <MessageCircle size={24} fill="white" className="text-[#25D366]" />
-        <span className="font-bold hidden md:inline">Tanya Admin</span>
-      </a>
+
+
+      {/* Floating Zoom Controls (Mobile Only) */}
+      {isMobile && students.length > 0 && (
+        <div className="fixed bottom-24 right-6 z-50 flex flex-col gap-2 print:hidden">
+          <button
+            onClick={() => setZoomLevel(prev => Math.min(prev + 0.1, 1.5))}
+            className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-700 active:scale-95 border border-gray-200"
+            title="Zoom In"
+          >
+            <ZoomIn size={24} />
+          </button>
+          <div className="bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-gray-600 text-center shadow-sm border border-gray-100">
+            {Math.round(zoomLevel * 100)}%
+          </div>
+          <button
+            onClick={() => setZoomLevel(prev => Math.max(prev - 0.1, 0.2))}
+            className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-700 active:scale-95 border border-gray-200"
+            title="Zoom Out"
+          >
+            <ZoomOut size={24} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
