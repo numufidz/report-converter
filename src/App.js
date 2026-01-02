@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Upload, Printer, FileSpreadsheet, Menu, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users, ZoomIn, ZoomOut, Search } from 'lucide-react';
+import { Upload, Printer, FileSpreadsheet, Menu, MessageCircle, FileText, ChevronLeft, ChevronRight, Layout, Type, Users, ZoomIn, ZoomOut } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Daftar mata pelajaran wajib
